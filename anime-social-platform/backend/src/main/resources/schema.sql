@@ -111,6 +111,30 @@ CREATE TABLE IF NOT EXISTS content_tags (
     UNIQUE KEY (tag_id, content_type, content_id)
 );
 
+-- 用户标签关联表
+-- 此表用于存储用户对各种标签的喜好关系
+-- 用于个性化推荐、兴趣分组和用户画像功能
+CREATE TABLE IF NOT EXISTS user_tags (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    tag_id INT NOT NULL,
+    created_at DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE,
+    UNIQUE KEY (user_id, tag_id)
+);
+
+-- 帖子点赞表
+CREATE TABLE IF NOT EXISTS post_likes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    post_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at DATETIME NOT NULL,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE KEY (post_id, user_id)
+);
+
 -- 活动表
 CREATE TABLE IF NOT EXISTS events (
     id INT AUTO_INCREMENT PRIMARY KEY,

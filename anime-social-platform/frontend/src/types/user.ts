@@ -3,6 +3,7 @@ export interface UserStats {
     postCount: number;
     favoriteCount: number;
     followingCount: number;
+    followersCount: number;
 }
 
 // 帖子信息

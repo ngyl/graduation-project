@@ -7,10 +7,10 @@
                 </div>
                 <div class="nav">
                     <el-menu mode="horizontal" :ellipsis="false" class="nav-menu">
-                        <el-menu-item index="1">首页</el-menu-item>
-                        <el-menu-item index="2">社区</el-menu-item>
-                        <el-menu-item index="3">资源</el-menu-item>
-                        <el-menu-item index="4">活动</el-menu-item>
+                        <el-menu-item index="1" @click="$router.push('/')">首页</el-menu-item>
+                        <el-menu-item index="2" @click="$router.push('/posts')">社区</el-menu-item>
+                        <!-- <el-menu-item index="3" @click="$router.push('/resources')">资源</el-menu-item> -->
+                        <!-- <el-menu-item index="4" @click="$router.push('/events')">活动</el-menu-item> -->
                         <div class="flex-grow"></div>
                         <!-- 未登录状态 -->
                         <template v-if="!isLoggedIn">

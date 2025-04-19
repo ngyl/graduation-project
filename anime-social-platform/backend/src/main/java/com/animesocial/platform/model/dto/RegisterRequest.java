@@ -1,5 +1,6 @@
 package com.animesocial.platform.model.dto;
 
+import java.util.List;
 import lombok.Data;
 
 import jakarta.validation.constraints.NotBlank;
@@ -12,6 +13,7 @@ import jakarta.validation.constraints.Size;
  * 1. 用户名
  * 2. 密码
  * 3. 确认密码
+ * 4. 标签ID列表
  * 
  * 使用验证注解确保数据的合法性：
  * 1. 用户名和密码不能为空
@@ -34,4 +36,10 @@ public class RegisterRequest {
     /** 确认密码 */
     @NotBlank(message = "确认密码不能为空")
     private String confirmPassword;
+    
+    /**
+     * 标签ID列表
+     * 用户在注册时选择的兴趣标签
+     */
+    private List<Integer> tagIds;
 } 

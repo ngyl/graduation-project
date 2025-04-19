@@ -16,7 +16,9 @@
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@stomp/stompjs": "^7.1.1",
     "@types/node": "^22.14.1",
+    "@types/sockjs-client": "^1.5.4",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue/tsconfig": "^0.7.0",
     "typescript": "~5.7.2",

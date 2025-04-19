@@ -1,31 +1,35 @@
 package com.animesocial.platform.model.dto;
 
 import lombok.Data;
+import java.util.List;
+import java.time.LocalDateTime;
 
 /**
- * 用户数据传输对象（DTO）
- * 
- * 用于在前后端之间传输用户信息，包含：
- * 1. 基本信息：ID、用户名
- * 2. 个人资料：头像、简介
- * 3. 权限信息：管理员标识
- * 
- * 注意：不包含敏感信息（如密码）
+ * 用户信息DTO
+ * 整合了用户基本信息、统计信息和扩展信息
  */
 @Data
 public class UserDTO {
-    /** 用户ID */
+    // 基本信息
     private Integer id;
-    
-    /** 用户名 */
     private String username;
-    
-    /** 头像URL */
     private String avatar;
-    
-    /** 个人简介 */
     private String bio;
-    
-    /** 是否为管理员 */
     private Boolean isAdmin;
+    private Integer status;
+    private LocalDateTime registerTime;
+    private LocalDateTime lastLoginTime;
+    
+    // 统计信息
+    private Integer postCount;
+    private Integer followingCount;
+    private Integer followerCount;
+    private Integer favoriteCount;
+    
+    // 扩展信息（按需加载）
+    private List<TagDTO> tags;
+    private List<PostDTO> recentPosts;
+    
+    // 用于前端展示的辅助字段
+    private Boolean isFollowing;  // 当前登录用户是否关注了该用户
 } 

@@ -44,45 +44,94 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ApiResponse<Void> register(@Valid @RequestBody RegisterRequest registerRequest) {
-        userService.register(registerRequest);
-        return ApiResponse.success("注册成功", null);
+        try {
+            userService.register(registerRequest);
+            return ApiResponse.success("注册成功", null);
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
     }
     
     /**
      * 用户登录接口
      * 
      * @param loginRequest 登录请求，包含用户名和密码
+     * @param session HTTP会话
      * @return 登录结果，包含token和用户信息
      */
     @PostMapping("/login")
-    public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
-        User user = userService.login(loginRequest);
-        
-        // 生成简单的token，实际项目中应使用JWT等方式
-        String token = String.format("%s_%d", user.getUsername(), System.currentTimeMillis());
-        
-        // 转换为DTO
-        UserDTO userDTO = new UserDTO();
-        BeanUtils.copyProperties(user, userDTO);
-        
-        // 创建登录响应
-        LoginResponse loginResponse = new LoginResponse(token, userDTO);
-        
-        return ApiResponse.success("登录成功", loginResponse);
+    public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest loginRequest, HttpSession session) {
+        try {
+            User user = userService.login(loginRequest);
+            
+            // 如果用户被禁用，拒绝登录
+            if (user.getStatus() == 0) {
+                return ApiResponse.failed("账号已被禁用，请联系管理员");
+            }
+            
+            // 生成简单的会话令牌
+            String token = String.format("%s_%d", user.getUsername(), System.currentTimeMillis());
+            
+            // 在会话中存储用户信息
+            session.setAttribute("userId", user.getId());
+            session.setAttribute("username", user.getUsername());
+            session.setAttribute("isAdmin", user.getIsAdmin());
+            
+            // 转换为DTO
+            UserDTO userDTO = new UserDTO();
+            BeanUtils.copyProperties(user, userDTO);
+            
+            // 创建登录响应
+            LoginResponse loginResponse = new LoginResponse(token, userDTO);
+            
+            return ApiResponse.success("登录成功", loginResponse);
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
     }
     
     /**
      * 获取当前用户信息接口
      * 
+     * @param session HTTP会话
      * @return 当前登录用户的信息，如果未登录则返回未授权错误
      */
     @GetMapping("/info")
-    public ApiResponse<UserDTO> info() {
-        UserDTO userDTO = userService.getCurrentUser();
-        if (userDTO == null) {
+    public ApiResponse<UserDTO> info(HttpSession session) {
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId == null) {
             return ApiResponse.unauthorized();
         }
-        return ApiResponse.success(userDTO);
+        
+        try {
+            UserDTO userDTO = userService.getUserById(userId);
+            if (userDTO == null) {
+                return ApiResponse.unauthorized();
+            }
+            return ApiResponse.success(userDTO);
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
+    }
+    
+    /**
+     * 检查用户名是否已存在
+     * 
+     * @param username 用户名
+     * @return 检查结果，true表示已存在，false表示不存在
+     */
+    @GetMapping("/check-username")
+    public ApiResponse<Boolean> checkUsername(String username) {
+        if (username == null || username.trim().isEmpty()) {
+            return ApiResponse.validateFailed("用户名不能为空");
+        }
+        
+        try {
+            boolean exists = userService.checkUsernameExists(username);
+            return ApiResponse.success(exists);
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
     }
     
     /**

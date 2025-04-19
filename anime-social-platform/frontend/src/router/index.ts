@@ -22,22 +22,23 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Profile',
     component: () => import('../views/Profile.vue')
   },
+  {
+    path: '/posts',
+    name: 'PostList',
+    component: () => import('../views/PostList.vue')
+  },
+  {
+    path: '/friends',
+    name: 'Friends',
+    component: () => import('../views/Friends.vue'),
+    meta: { requiresAuth: true }
+  },
   // {
-  //   path: '/post/:id',
-  //   name: 'PostDetail',
-  //   component: () => import('../views/PostDetail.vue')
+  //   path: '/messages/:id?',
+  //   name: 'Messages',
+  //   component: () => import('../views/Messages.vue'),
+  //   meta: { requiresAuth: true }
   // },
-  // {
-  //   path: '/resource/:id',
-  //   name: 'ResourceDetail',
-  //   component: () => import('../views/ResourceDetail.vue')
-  // },
-  // {
-  //   path: '/admin',
-  //   name: 'Admin',
-  //   component: () => import('../views/admin/AdminDashboard.vue'),
-  //   meta: { requiresAdmin: true }
-  // }
 ]
 
 const router = createRouter({
@@ -47,8 +48,19 @@ const router = createRouter({
 
 // 全局前置守卫
 router.beforeEach((to, from, next) => {
-  // 这里将来添加登录验证和权限验证逻辑
-  next()
+  // 检查路由是否需要身份验证
+  if (to.matched.some(record => record.meta.requiresAuth)) {
+    // 检查用户是否已登录
+    const isLoggedIn = localStorage.getItem('token');
+    if (!isLoggedIn) {
+      // 如果未登录，重定向到登录页
+      next({ path: '/login', query: { redirect: to.fullPath } });
+    } else {
+      next();
+    }
+  } else {
+    next();
+  }
 })
 
 export default router 
