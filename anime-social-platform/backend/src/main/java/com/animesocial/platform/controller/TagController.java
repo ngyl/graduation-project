@@ -1,8 +1,6 @@
 package com.animesocial.platform.controller;
 
 import com.animesocial.platform.model.dto.TagDTO;
-import com.animesocial.platform.model.dto.UserTagsDTO;
-import com.animesocial.platform.model.dto.UpdateUserTagsRequest;
 import com.animesocial.platform.model.dto.ApiResponse;
 import com.animesocial.platform.service.TagService;
 import jakarta.servlet.http.HttpSession;
@@ -48,51 +46,6 @@ public class TagController {
         return ApiResponse.success(tagService.getTagsByType(type));
     }
     
-    /**
-     * 获取用户标签
-     * @param userId 用户ID
-     * @return 用户标签列表
-     */
-    @GetMapping("/user/{userId}")
-    public ApiResponse<UserTagsDTO> getUserTags(@PathVariable Integer userId) {
-        try {
-            return ApiResponse.success(tagService.getUserTags(userId));
-        } catch (Exception e) {
-            return ApiResponse.failed(e.getMessage());
-        }
-    }
-    
-    /**
-     * 更新用户标签
-     * @param userId 用户ID
-     * @param request 标签更新请求
-     * @param session HTTP会话
-     * @return 操作结果
-     */
-    @PutMapping("/user/{userId}")
-    public ApiResponse<Void> updateUserTags(
-            @PathVariable Integer userId,
-            @RequestBody UpdateUserTagsRequest request,
-            HttpSession session
-    ) {
-        // 检查用户是否登录
-        Integer currentUserId = (Integer) session.getAttribute("userId");
-        if (currentUserId == null) {
-            return ApiResponse.unauthorized();
-        }
-        
-        // 检查权限
-        if (!currentUserId.equals(userId)) {
-            return ApiResponse.forbidden();
-        }
-        
-        try {
-            tagService.updateUserTags(userId, request);
-            return ApiResponse.success("标签更新成功", null);
-        } catch (Exception e) {
-            return ApiResponse.failed(e.getMessage());
-        }
-    }
     
     /**
      * 管理员创建新标签

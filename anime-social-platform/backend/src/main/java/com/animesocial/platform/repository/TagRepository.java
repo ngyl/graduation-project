@@ -19,7 +19,7 @@ public interface TagRepository {
     
     /**
      * 根据类型查询标签
-     * @param type 标签类型(post/resource/user)
+     * @param type 标签类型(post/resource)
      * @return 标签列表
      */
     @Select("SELECT * FROM tags WHERE type = #{type}")
@@ -42,7 +42,7 @@ public interface TagRepository {
     Tag findByName(String name);
     
     /**
-     * 根据用户ID查询标签
+     * 根据用户ID查询标签（用于推荐功能）
      * @param userId 用户ID
      * @return 标签列表
      */
@@ -92,44 +92,6 @@ public interface TagRepository {
      */
     @Delete("DELETE FROM tags WHERE id = #{id}")
     void deleteById(Integer id);
-    
-    /**
-     * 保存用户标签
-     * @param userId 用户ID
-     * @param tagId 标签ID
-     */
-    @Insert("INSERT INTO user_tags (user_id, tag_id, created_at) VALUES (#{userId}, #{tagId}, NOW())")
-    void saveUserTag(@Param("userId") Integer userId, @Param("tagId") Integer tagId);
-    
-    /**
-     * 批量保存用户标签
-     * @param userId 用户ID
-     * @param tagIds 标签ID列表
-     */
-    @Insert({
-        "<script>",
-        "INSERT INTO user_tags (user_id, tag_id, created_at) VALUES ",
-        "<foreach collection='tagIds' item='tagId' separator=','>",
-        "(#{userId}, #{tagId}, NOW())",
-        "</foreach>",
-        "</script>"
-    })
-    void saveUserTags(@Param("userId") Integer userId, @Param("tagIds") List<Integer> tagIds);
-    
-    /**
-     * 删除用户标签
-     * @param userId 用户ID
-     * @param tagId 标签ID
-     */
-    @Delete("DELETE FROM user_tags WHERE user_id = #{userId} AND tag_id = #{tagId}")
-    void deleteUserTag(@Param("userId") Integer userId, @Param("tagId") Integer tagId);
-    
-    /**
-     * 删除用户的所有标签
-     * @param userId 用户ID
-     */
-    @Delete("DELETE FROM user_tags WHERE user_id = #{userId}")
-    void deleteAllUserTags(Integer userId);
     
     /**
      * 保存内容标签
@@ -202,33 +164,12 @@ public interface TagRepository {
     void deleteResourceTags(Integer resourceId);
     
     /**
-     * 检查用户是否已有标签
-     * @param userId 用户ID
+     * 统计使用标签的内容数量（帖子和资源）
      * @param tagId 标签ID
-     * @return 存在返回true，否则返回false
+     * @return 内容数量
      */
-    @Select("SELECT COUNT(*) FROM user_tags WHERE user_id = #{userId} AND tag_id = #{tagId}")
-    boolean existsUserTag(@Param("userId") Integer userId, @Param("tagId") Integer tagId);
-    
-    /**
-     * 统计使用标签的用户数量
-     * @param tagId 标签ID
-     * @return 用户数量
-     */
-    @Select("SELECT COUNT(*) FROM user_tags WHERE tag_id = #{tagId}")
-    int countUsersByTagId(Integer tagId);
-    
-    /**
-     * 获取热门标签(根据用户使用数量)
-     * @param limit 数量限制
-     * @return 标签列表
-     */
-    @Select("SELECT t.*, COUNT(ut.id) AS user_count FROM tags t " +
-            "JOIN user_tags ut ON t.id = ut.tag_id " +
-            "GROUP BY t.id " +
-            "ORDER BY user_count DESC " +
-            "LIMIT #{limit}")
-    List<Tag> findHotTagsByUserCount(Integer limit);
+    @Select("SELECT COUNT(*) FROM content_tags WHERE tag_id = #{tagId}")
+    int countContentByTagId(Integer tagId);
     
     /**
      * 获取热门标签(根据内容使用数量)
@@ -243,4 +184,35 @@ public interface TagRepository {
             "ORDER BY content_count DESC " +
             "LIMIT #{limit}")
     List<Tag> findHotTagsByContentCount(@Param("contentType") String contentType, @Param("limit") Integer limit);
+    
+    /**
+     * 根据标签ID查询与之关联的帖子ID列表
+     * @param tagId 标签ID
+     * @return 帖子ID列表
+     */
+    @Select("SELECT content_id FROM content_tags WHERE content_type = 'post' AND tag_id = #{tagId}")
+    List<Integer> findPostIdsByTagId(Integer tagId);
+    
+    /**
+     * 根据标签ID查询与之关联的资源ID列表
+     * @param tagId 标签ID
+     * @return 资源ID列表
+     */
+    @Select("SELECT content_id FROM content_tags WHERE content_type = 'resource' AND tag_id = #{tagId}")
+    List<Integer> findResourceIdsByTagId(Integer tagId);
+    
+    /**
+     * 统计标签总数
+     * @return 标签总数
+     */
+    @Select("SELECT COUNT(*) FROM tags")
+    int count();
+    
+    /**
+     * 根据类型统计标签数量
+     * @param type 标签类型(post/resource)
+     * @return 标签数量
+     */
+    @Select("SELECT COUNT(*) FROM tags WHERE type = #{type}")
+    int countByType(String type);
 } 

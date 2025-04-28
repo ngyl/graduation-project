@@ -1,6 +1,5 @@
 package com.animesocial.platform.service;
 
-import com.animesocial.platform.model.User;
 import com.animesocial.platform.model.dto.UserDTO;
 
 import java.util.List;
@@ -32,14 +31,6 @@ public interface FriendshipService {
     String unfollow(Integer userId, Integer targetId);
     
     /**
-     * 获取用户的关注列表
-     * 
-     * @param userId 用户ID
-     * @return 关注的用户列表
-     */
-    List<UserDTO> getFollowing(Integer userId);
-    
-    /**
      * 分页获取用户的关注列表
      * 
      * @param userId 用户ID
@@ -48,14 +39,6 @@ public interface FriendshipService {
      * @return 关注的用户列表
      */
     List<UserDTO> getFollowing(Integer userId, Integer page, Integer size);
-    
-    /**
-     * 获取用户的粉丝列表
-     * 
-     * @param userId 用户ID
-     * @return 粉丝用户列表
-     */
-    List<UserDTO> getFollowers(Integer userId);
     
     /**
      * 分页获取用户的粉丝列表

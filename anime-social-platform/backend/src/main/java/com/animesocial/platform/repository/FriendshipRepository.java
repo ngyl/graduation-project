@@ -17,22 +17,6 @@ public interface FriendshipRepository {
      * @return 关注数量
      */
     @Select("SELECT COUNT(*) FROM friendships WHERE user_id = #{userId}")
-    int countByUserId(Integer userId);
-    
-    /**
-     * 统计用户的粉丝数量
-     * @param userId 用户ID
-     * @return 粉丝数量
-     */
-    @Select("SELECT COUNT(*) FROM friendships WHERE friend_id = #{userId}")
-    int countFollowersByUserId(Integer userId);
-    
-    /**
-     * 统计用户的关注数量
-     * @param userId 用户ID
-     * @return 关注数量
-     */
-    @Select("SELECT COUNT(*) FROM friendships WHERE user_id = #{userId}")
     int countFollowing(Integer userId);
     
     /**
@@ -50,15 +34,6 @@ public interface FriendshipRepository {
      * @return 存在返回true，不存在返回false
      */
     @Select("SELECT COUNT(*) > 0 FROM friendships WHERE user_id = #{userId} AND friend_id = #{friendId}")
-    boolean existsByUserIdAndFriendId(@Param("userId") Integer userId, @Param("friendId") Integer friendId);
-    
-    /**
-     * 检查是否存在关注关系
-     * @param userId 用户ID
-     * @param friendId 好友ID
-     * @return 存在返回true，不存在返回false
-     */
-    @Select("SELECT COUNT(*) > 0 FROM friendships WHERE user_id = #{userId} AND friend_id = #{friendId}")
     boolean exists(@Param("userId") Integer userId, @Param("friendId") Integer friendId);
     
     /**
@@ -67,21 +42,11 @@ public interface FriendshipRepository {
      * @param friendId 好友ID
      * @return 互相关注返回true，否则返回false
      */
-    @Select("SELECT COUNT(*) > 0 FROM friendships f1 " +
-            "JOIN friendships f2 ON f1.user_id = f2.friend_id AND f1.friend_id = f2.user_id " +
-            "WHERE f1.user_id = #{userId} AND f1.friend_id = #{friendId}")
+    @Select("SELECT COUNT(*) > 0 FROM friendships WHERE user_id = #{userId} AND friend_id = #{friendId} AND status = 1")
     boolean isMutualFollow(@Param("userId") Integer userId, @Param("friendId") Integer friendId);
     
     /**
-     * 保存关注关系
-     * @param userId 用户ID
-     * @param friendId 好友ID
-     */
-    @Insert("INSERT INTO friendships (user_id, friend_id, status, created_at) VALUES (#{userId}, #{friendId}, 0, NOW())")
-    void save(@Param("userId") Integer userId, @Param("friendId") Integer friendId);
-    
-    /**
-     * 保存关注关系
+     * 添加关注关系
      * @param userId 用户ID
      * @param friendId 好友ID
      */
@@ -98,15 +63,7 @@ public interface FriendshipRepository {
     void updateStatus(@Param("userId") Integer userId, @Param("friendId") Integer friendId, @Param("status") Integer status);
     
     /**
-     * 删除关注关系
-     * @param userId 用户ID
-     * @param friendId 好友ID
-     */
-    @Delete("DELETE FROM friendships WHERE user_id = #{userId} AND friend_id = #{friendId}")
-    void deleteByUserIdAndFriendId(@Param("userId") Integer userId, @Param("friendId") Integer friendId);
-    
-    /**
-     * 删除关注关系
+     * 取消关注关系
      * @param userId 用户ID
      * @param friendId 好友ID
      */
@@ -128,4 +85,42 @@ public interface FriendshipRepository {
      */
     @Select("SELECT user_id FROM friendships WHERE friend_id = #{userId}")
     List<Integer> findFollowerIds(Integer userId);
+
+    /**
+     * 获取用户互相关注的用户ID列表
+     * @param userId 用户ID
+     * @return 互相关注的用户ID列表
+     */
+    @Select("SELECT friend_id FROM friendships WHERE user_id = #{userId} AND status = 1")
+    List<Integer> findMutualIds(Integer userId);
+    
+    /**
+     * 获取用户的好友关系状态
+     * @param userId 用户ID
+     * @param friendId 好友ID
+     * @return 关系状态(0单向关注,1互相关注), 如果不存在关系则返回null
+     */
+    @Select("SELECT status FROM friendships WHERE user_id = #{userId} AND friend_id = #{friendId}")
+    Integer getStatus(@Param("userId") Integer userId, @Param("friendId") Integer friendId);
+    
+    /**
+     * 批量获取用户的关注状态
+     * @param userId 用户ID
+     * @param friendIds 好友ID列表
+     * @return 好友ID与关注状态的映射
+     */
+    @Select({
+        "<script>",
+        "SELECT friend_id, status FROM friendships",
+        "WHERE user_id = #{userId} AND friend_id IN",
+        "<foreach item='item' collection='friendIds' open='(' separator=',' close=')'>",
+        "#{item}",
+        "</foreach>",
+        "</script>"
+    })
+    @Results({
+        @Result(property = "key", column = "friend_id"),
+        @Result(property = "value", column = "status")
+    })
+    List<java.util.Map.Entry<Integer, Integer>> getStatusBatch(@Param("userId") Integer userId, @Param("friendIds") List<Integer> friendIds);
 } 

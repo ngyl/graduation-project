@@ -1,4 +1,6 @@
 import SockJS from 'sockjs-client';
+// 如果上面的导入方式不工作，可以尝试下面这种方式:
+// const SockJS = require('sockjs-client');
 import { Client, IFrame, IMessage } from '@stomp/stompjs';
 import { ElMessage } from 'element-plus';
 import { useUserStore } from '../stores/user';
@@ -45,18 +47,41 @@ class WebSocketService {
     }
 
     try {
+      // 使用与API相同的基础URL，确保WebSocket连接到正确的后端
+      const baseURL = 'http://localhost:8080';
+      const sockjsUrl = `${baseURL}/ws`;
+      
+      console.log('正在连接WebSocket:', sockjsUrl);
+      
+      // 检测是否有可用的userId，没有则无法建立连接
+      if (!userStore.user?.id) {
+        console.error('WebSocket连接失败: 用户ID未定义');
+        return false;
+      }
+      
       this.client = new Client({
-        webSocketFactory: () => new SockJS('/ws'),
+        webSocketFactory: () => new SockJS(sockjsUrl, null, {
+          transports: ['websocket', 'xhr-streaming', 'xhr-polling'],
+          withCredentials: true
+        }),
         debug: function(str: string) {
           console.log('STOMP: ' + str);
         },
         reconnectDelay: 5000,
         heartbeatIncoming: 4000,
-        heartbeatOutgoing: 4000
+        heartbeatOutgoing: 4000,
+        connectionTimeout: 10000, // 连接超时时间
+        onStompError: (frame) => {
+          console.error('Stomp错误:', frame);
+          this.connected = false;
+          this.scheduleReconnect();
+        }
       });
 
       this.client.onConnect = this.onConnected.bind(this);
-      this.client.onStompError = this.onError.bind(this);
+      // 添加WebSocket连接断开的监听器
+      this.client.onWebSocketClose = this.onWebSocketClose.bind(this);
+      this.client.onDisconnect = this.onDisconnect.bind(this);
       this.client.activate();
       return true;
     } catch (error) {
@@ -192,12 +217,26 @@ class WebSocketService {
     this.connected = false;
     this.scheduleReconnect();
   }
+  
+  // WebSocket连接关闭处理
+  private onWebSocketClose() {
+    console.warn('WebSocket连接已关闭');
+    this.connected = false;
+    this.scheduleReconnect();
+  }
+  
+  // STOMP断开连接处理
+  private onDisconnect() {
+    console.warn('STOMP连接已断开');
+    this.connected = false;
+    this.scheduleReconnect();
+  }
 
   // 计划重连
   private scheduleReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      const delay = Math.min(5000 * Math.pow(2, this.reconnectAttempts - 1), 30000);
+      const delay = Math.min(3000 * Math.pow(1.5, this.reconnectAttempts - 1), 15000);
       
       console.log(`尝试在 ${delay}ms 后重新连接... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
       
@@ -206,18 +245,35 @@ class WebSocketService {
       }
       
       this.reconnectTimeout = window.setTimeout(() => {
+        console.log('执行WebSocket重连...');
         this.connect();
       }, delay);
     } else {
       console.error(`已达到最大重连尝试次数 (${this.maxReconnectAttempts})`);
-      ElMessage.error('WebSocket连接失败，请刷新页面重试');
+      ElMessage.error('消息连接失败，请刷新页面或手动重连');
     }
+  }
+
+  // 检查连接状态并尝试重连
+  checkConnectionAndReconnect() {
+    if (!this.connected) {
+      console.log('WebSocket连接已断开，尝试重新连接...');
+      // 重置重连尝试次数，以便有更多机会连接
+      this.reconnectAttempts = 0;
+      return this.connect();
+    }
+    return true;
   }
 
   // 断开连接
   disconnect() {
+    console.log('断开WebSocket连接');
     if (this.client) {
-      this.client.deactivate();
+      try {
+        this.client.deactivate();
+      } catch (error) {
+        console.error('断开WebSocket连接时出错:', error);
+      }
       this.client = null;
     }
     this.connected = false;
@@ -229,9 +285,13 @@ class WebSocketService {
     }
   }
 
-  // 获取连接状态
+  // 检查是否已连接
   isConnected() {
-    return this.connected;
+    // 增加更严格的检查 - 确保连接状态正确且client对象有效并处于激活状态
+    return this.connected && 
+           this.client !== null && 
+           this.client.connected && 
+           !!this.client.webSocket;
   }
 }
 

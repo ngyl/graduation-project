@@ -1,21 +1,19 @@
+import type { UserDTO } from './user';
+import type { TagDTO } from './tag';
+
 export interface Post {
     id: number;
     title: string;
     content: string;
-    created_at: string;
-    updated_at: string;
-    view_count: number;
-    like_count: number;
-    comment_count: number;
-    user: {
-        id: number;
-        username: string;
-        avatar: string;
-    };
-    tags: {
-        id: number;
-        name: string;
-    }[];
+    createdAt: string;
+    updatedAt: string;
+    viewCount: number;
+    likeCount: number;
+    commentCount: number;
+    isTop: boolean;
+    isLiked: boolean;
+    userDTO: UserDTO;
+    tags: TagDTO[];
 }
 
 export interface CreatePostRequest {

@@ -1,5 +1,7 @@
 package com.animesocial.platform.service;
 
+import java.util.List;
+
 import com.animesocial.platform.model.Post;
 import com.animesocial.platform.model.Resource;
 import com.animesocial.platform.model.User;
@@ -8,9 +10,6 @@ import com.animesocial.platform.model.dto.RegisterRequest;
 import com.animesocial.platform.model.dto.UpdateUserInfoRequest;
 import com.animesocial.platform.model.dto.UserDTO;
 import com.animesocial.platform.model.dto.UserDetailResponse;
-
-import java.util.List;
-import java.util.Map;
 
 /**
  * 用户服务接口
@@ -42,7 +41,7 @@ public interface UserService {
      * @param id 用户ID
      * @return 用户信息DTO，如果用户不存在则返回null
      */
-    UserDTO getUserById(Integer id);
+    UserDTO getUserDTOById(Integer id);
     
     /**
      * 根据用户名获取用户信息
@@ -50,7 +49,7 @@ public interface UserService {
      * @param username 用户名
      * @return 用户实体对象，如果用户不存在则返回null
      */
-    User getByUsername(String username);
+    UserDTO getByUserDTOname(String username);
     
     /**
      * 检查用户名是否已存在
@@ -86,20 +85,34 @@ public interface UserService {
     UserDetailResponse getUserDetail(Integer id);
     
     /**
-     * 获取用户的帖子列表
+     * 分页获取用户的帖子列表
      * 
      * @param id 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 帖子列表，按创建时间降序排序
      */
-    List<Post> getUserPosts(Integer id);
+    List<Post> getUserPosts(Integer id, Integer page, Integer size);
+
+    /**
+     * 分页获取用户所上传的资源
+     * 
+     * @param userId 用户ID
+     * @param page 页码
+     * @param size 每页数量
+     * @return 资源列表，按创建时间降序排序
+     */
+    List<Resource> getUserResources(Integer userId, Integer page, Integer size);
     
     /**
-     * 获取用户的收藏列表
+     * 分页获取用户的收藏列表
      * 
      * @param id 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 资源列表，按收藏时间降序排序
      */
-    List<Resource> getUserFavorites(Integer id);
+    List<Resource> getUserFavorites(Integer id, Integer page, Integer size);
     
     /**
      * 更新用户信息
@@ -110,7 +123,7 @@ public interface UserService {
      * @return 更新后的用户对象
      * @throws RuntimeException 如果用户不存在
      */
-    User updateUserInfo(Integer id, UpdateUserInfoRequest request);
+    UserDTO updateUserInfo(Integer id, UpdateUserInfoRequest request);
     
     /**
      * 更新用户状态
@@ -157,40 +170,47 @@ public interface UserService {
     List<UserDTO> searchUsers(String keyword, Integer page, Integer size);
     
     /**
-     * 关注用户
+     * 关注或取消关注用户
+     * 根据当前关注状态自动判断：
+     * - 如果未关注，则创建关注关系
+     * - 如果已关注，则取消关注
      * 
      * @param userId 当前用户ID
-     * @param followId 被关注用户ID
-     * @return 操作结果描述
+     * @param targetId 目标用户ID
+     * @return 操作结果描述，例如"关注成功"或"已取消关注"
      * @throws RuntimeException 如果用户不存在或不能关注自己
      */
-    String followUser(Integer userId, Integer followId);
-    
-    /**
-     * 取消关注
-     * 
-     * @param userId 当前用户ID
-     * @param followId 被取消关注的用户ID
-     * @return 操作结果描述
-     * @throws RuntimeException 如果用户不存在或关注关系不存在
-     */
-    String unfollowUser(Integer userId, Integer followId);
+    String toggleFollow(Integer userId, Integer targetId);
     
     /**
      * 获取用户的关注列表
      * 
      * @param userId 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 关注的用户列表
      */
-    List<User> getUserFollowing(Integer userId);
+    List<UserDTO> getUserFollowing(Integer userId, Integer page, Integer size);
     
     /**
      * 获取用户的粉丝列表
      * 
      * @param userId 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 粉丝用户列表
      */
-    List<User> getUserFollowers(Integer userId);
+    List<UserDTO> getUserFollowers(Integer userId, Integer page, Integer size);
+    
+    /**
+     * 获取用户相互关注列表
+     * 
+     * @param userId 用户ID
+     * @param page 页码
+     * @param size 每页数量
+     * @return 相互关注用户列表
+     */
+    List<UserDTO> getMutualFriends(Integer userId, Integer page, Integer size);
     
     /**
      * 检查是否已关注用户
@@ -200,4 +220,17 @@ public interface UserService {
      * @return true表示已关注，false表示未关注
      */
     boolean isFollowing(Integer userId, Integer followId);
+    
+    /**
+     * 获取用户总数
+     * @return 用户总数
+     */
+    int countUsers();
+    
+    /**
+     * 根据ID列表批量查询用户
+     * @param ids 用户ID列表
+     * @return 用户DTO列表
+     */
+    List<UserDTO> findByIds(List<Integer> ids);
 } 

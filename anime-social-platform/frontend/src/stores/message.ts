@@ -5,13 +5,7 @@ import { MessageDTO, ChatFriend } from '../types/message'
 import websocketService, { ChatMessage } from '../utils/websocket'
 import { useUserStore } from './user'
 import { ElNotification } from 'element-plus'
-
-// 定义API响应类型
-interface ApiResponse<T> {
-  code: number;
-  message: string;
-  data: T;
-}
+import { ApiResponse } from '@/types/api'
 
 export const useMessageStore = defineStore('message', () => {
   // 状态
@@ -21,6 +15,7 @@ export const useMessageStore = defineStore('message', () => {
   const unreadTotal = ref(0)
   const loading = ref(false)
   const initialized = ref(false)
+  const connectionCheckInterval = ref<number | null>(null)
 
   // 计算属性
   const sortedChatFriends = computed(() => {
@@ -30,8 +25,8 @@ export const useMessageStore = defineStore('message', () => {
       if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
       
       // 然后按最后消息时间排序
-      const timeA = new Date(a.lastMessage?.sendTime || 0).getTime();
-      const timeB = new Date(b.lastMessage?.sendTime || 0).getTime();
+      const timeA = new Date(a.lastMessage?.sendTime ?? 0).getTime();
+      const timeB = new Date(b.lastMessage?.sendTime ?? 0).getTime();
       return timeB - timeA;
     });
   });
@@ -42,17 +37,48 @@ export const useMessageStore = defineStore('message', () => {
   async function fetchChatFriends() {
     try {
       loading.value = true;
+      
+      // 检查用户是否已登录
+      const userStore = useUserStore();
+      if (!userStore.isLoggedIn || !userStore.user?.id) {
+        console.warn('用户未登录或ID无效，不能获取聊天好友列表');
+        return { code: 401, message: '用户未登录', data: [] };
+      }
+      
       const response = await messageApi.getChatFriends();
-      const data = response.data as ApiResponse<MessageDTO[]>;
+      console.log('获取聊天好友列表原始响应:', response);
+      
+      const data = response.data as ApiResponse<any>;
       
       if (data.code === 200) {
-        chatFriends.value = processChatFriends(data.data);
+        // 检查是否为消息列表(而不是ChatFriend列表)
+        if (Array.isArray(data.data) && data.data.length > 0 && 'senderId' in data.data[0]) {
+          console.log('检测到返回的是消息列表，将其转换为聊天好友列表');
+          // 后端返回的是消息列表，需要转换为聊天好友列表
+          const messages = data.data as MessageDTO[];
+          chatFriends.value = processChatFriends(messages);
+        } 
+        // 检查是否为ChatFriend列表
+        else if (Array.isArray(data.data) && data.data.length > 0 && 'user' in data.data[0]) {
+          console.log('检测到返回的是聊天好友列表格式');
+          // 直接使用后端返回的好友列表
+          chatFriends.value = data.data;
+        }
+        // 其他情况，可能是空列表或未知格式
+        else {
+          console.log('返回数据为空或格式未知，当前使用空列表');
+          chatFriends.value = [];
+        }
+        
+        console.log('处理后的好友列表:', chatFriends.value);
         updateUnreadTotal();
+      } else {
+        console.error('获取聊天好友列表API调用失败:', data.message);
       }
       return data;
     } catch (error) {
-      console.error('获取聊天好友列表失败:', error);
-      throw error;
+      console.error('获取聊天好友列表异常:', error);
+      return { code: 500, message: '获取聊天好友列表失败', data: [] };
     } finally {
       loading.value = false;
     }
@@ -120,10 +146,16 @@ export const useMessageStore = defineStore('message', () => {
       if (data.code === 200) {
         if (page === 1) {
           // 第一页，替换所有消息
-          currentChatMessages.value = data.data;
+          // 按时间从旧到新排序消息
+          currentChatMessages.value = data.data.sort((a, b) => {
+            return new Date(a.sendTime).getTime() - new Date(b.sendTime).getTime();
+          });
         } else {
-          // 加载更多，追加消息
-          currentChatMessages.value = [...currentChatMessages.value, ...data.data];
+          // 加载更多(更早的消息)，放在当前消息列表前面
+          const newMessages = data.data.sort((a, b) => {
+            return new Date(a.sendTime).getTime() - new Date(b.sendTime).getTime();
+          });
+          currentChatMessages.value = [...newMessages, ...currentChatMessages.value];
         }
         currentChatUserId.value = friendId;
         
@@ -154,8 +186,8 @@ export const useMessageStore = defineStore('message', () => {
       const tempMessage: MessageDTO = {
         id: -Date.now(), // 临时ID，负数避免冲突
         senderId: currentUserId,
-        senderName: userStore.user?.username || '',
-        senderAvatar: userStore.user?.avatar || '',
+        senderName: userStore.user?.username ?? '',
+        senderAvatar: userStore.user?.avatar ?? '',
         receiverId: receiverId,
         receiverName: '',  // 不重要，因为是自己发的
         receiverAvatar: '',
@@ -164,9 +196,9 @@ export const useMessageStore = defineStore('message', () => {
         readStatus: 1  // 已读，因为是自己发的
       };
       
-      // 添加到当前聊天记录
+      // 添加到当前聊天记录（追加到末尾）
       if (currentChatUserId.value === receiverId) {
-        currentChatMessages.value = [tempMessage, ...currentChatMessages.value];
+        currentChatMessages.value.push(tempMessage);
       }
       
       // 更新聊天好友列表
@@ -192,13 +224,13 @@ export const useMessageStore = defineStore('message', () => {
       receiverName: '',
       receiverAvatar: '',
       content: message.content,
-      sendTime: new Date(message.timestamp || Date.now()).toISOString(),
+      sendTime: new Date(message.timestamp ?? Date.now()).toISOString(),
       readStatus: 0 // 默认未读
     };
     
-    // 如果是当前聊天对象发的消息，加入到聊天记录
+    // 如果是当前聊天对象发的消息，加入到聊天记录（追加到末尾）
     if (currentChatUserId.value === message.senderId) {
-      currentChatMessages.value = [newMessage, ...currentChatMessages.value];
+      currentChatMessages.value.push(newMessage);
       
       // 标记为已读
       messageApi.markAllAsRead(message.senderId);
@@ -221,7 +253,7 @@ export const useMessageStore = defineStore('message', () => {
   function showMessageNotification(message: MessageDTO) {
     // 从好友列表中找到发送者信息
     const friend = chatFriends.value.find(f => f.user.id === message.senderId);
-    const senderName = friend?.user.username || message.senderName || '有人';
+    const senderName = friend?.user.username ?? message.senderName ?? '有人';
     
     ElNotification({
       title: `来自 ${senderName} 的新消息`,
@@ -233,14 +265,6 @@ export const useMessageStore = defineStore('message', () => {
         currentChatUserId.value = message.senderId;
       }
     });
-    
-    // 如果浏览器支持，播放提示音
-    try {
-      const audio = new Audio('/message-notification.mp3');
-      audio.play().catch(e => console.log('无法播放提示音:', e));
-    } catch (error) {
-      console.log('不支持音频播放');
-    }
   }
 
   // 根据新消息更新聊天好友列表
@@ -312,33 +336,74 @@ export const useMessageStore = defineStore('message', () => {
 
   // 初始化WebSocket连接和消息监听
   function initialize() {
-    if (initialized.value) return;
-    
-    const userStore = useUserStore();
-    if (!userStore.isLoggedIn) return;
-    
-    // 连接WebSocket
-    websocketService.connect();
-    
-    // 添加消息监听
-    websocketService.onMessage(handleNewMessage);
-    
-    // 加载聊天好友列表
-    fetchChatFriends();
-    
-    // 获取未读消息数量
-    messageApi.getUnreadCount().then(response => {
-      const data = response.data as ApiResponse<number>;
-      if (data.code === 200) {
-        unreadTotal.value = data.data;
+    try {
+      if (initialized.value) {
+        console.log('消息系统已初始化，跳过');
+        return;
       }
-    });
-    
-    initialized.value = true;
+      
+      const userStore = useUserStore();
+      if (!userStore.isLoggedIn || !userStore.user?.id) {
+        console.warn('用户未登录或ID无效，不能初始化消息系统');
+        return;
+      }
+      
+      console.log('初始化消息系统...');
+      
+      // 初始化空数组，防止渲染错误
+      chatFriends.value = [];
+      currentChatMessages.value = [];
+      
+      // 连接WebSocket
+      const connected = websocketService.connect();
+      console.log('WebSocket连接状态:', connected ? '成功' : '失败');
+      
+      if (connected) {
+        // 添加消息监听
+        websocketService.onMessage(handleNewMessage);
+        
+        // 加载聊天好友列表
+        fetchChatFriends().catch(err => {
+          console.error('获取聊天好友列表失败:', err);
+        });
+        
+        // 获取未读消息数量
+        messageApi.getUnreadCount().then(response => {
+          const data = response.data as ApiResponse<number>;
+          if (data.code === 200) {
+            unreadTotal.value = data.data;
+          }
+        }).catch(err => {
+          console.error('获取未读消息数量失败:', err);
+        });
+        
+        // 设置定期检查WebSocket连接状态
+        connectionCheckInterval.value = window.setInterval(() => {
+          if (!websocketService.isConnected()) {
+            console.warn('定期检查: WebSocket连接已断开，尝试重连');
+            websocketService.checkConnectionAndReconnect();
+          }
+        }, 10000); // 每10秒检查一次连接状态
+      }
+      
+      initialized.value = true;
+    } catch (error) {
+      console.error('初始化消息系统失败:', error);
+      // 即使初始化失败，也不要阻止页面渲染
+      chatFriends.value = [];
+      currentChatMessages.value = [];
+      initialized.value = true; 
+    }
   }
 
   // 清理资源
   function cleanup() {
+    // 清除连接检查间隔器
+    if (connectionCheckInterval.value) {
+      window.clearInterval(connectionCheckInterval.value);
+      connectionCheckInterval.value = null;
+    }
+    
     websocketService.disconnect();
     chatFriends.value = [];
     currentChatMessages.value = [];

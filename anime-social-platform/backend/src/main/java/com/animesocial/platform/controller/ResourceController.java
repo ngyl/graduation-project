@@ -2,9 +2,11 @@ package com.animesocial.platform.controller;
 
 import com.animesocial.platform.model.dto.ApiResponse;
 import com.animesocial.platform.model.dto.ResourceDTO;
+import com.animesocial.platform.model.dto.ResourceListResponse;
 import com.animesocial.platform.service.ResourceService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -48,7 +50,7 @@ public class ResourceController {
      * @return 资源列表和总数
      */
     @GetMapping
-    public ApiResponse<Object> getAllResources(
+    public ApiResponse<ResourceListResponse> getAllResources(
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(required = false) Integer tagId,
@@ -62,13 +64,16 @@ public class ResourceController {
 
     /**
      * 获取指定用户的所有资源
-     * @param userId 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 资源列表
      */
     @GetMapping("/user/{userId}")
-    public ApiResponse<List<ResourceDTO>> getUserResources(@PathVariable Integer userId) {
+    public ApiResponse<List<ResourceDTO>> getUserResources(@PathVariable Integer userId,
+                                                          @RequestParam(defaultValue = "1") Integer page,
+                                                          @RequestParam(defaultValue = "10") Integer size) {
         try {
-            return ApiResponse.success(resourceService.getResourcesByUserId(userId));
+            return ApiResponse.success(resourceService.getResourcesByUserId(userId, page, size));
         } catch (Exception e) {
             return ApiResponse.failed(e.getMessage());
         }
@@ -89,15 +94,20 @@ public class ResourceController {
             @RequestParam(required = false) String description,
             @RequestParam(required = false) List<Integer> tagIds,
             @RequestParam MultipartFile file,
+            @RequestParam(required = false) MultipartFile cover,
             HttpSession session) {
         // 检查用户是否登录
         Integer userId = (Integer) session.getAttribute("userId");
         if (userId == null) {
             return ApiResponse.unauthorized();
         }
-        
+        ResourceDTO resource = null;
         try {
-            ResourceDTO resource = resourceService.uploadResource(userId, title, description, tagIds, file);
+            if (cover != null && !cover.isEmpty()) {
+               resource = resourceService.uploadResourceWithCover(userId, title, description, tagIds, file, cover);
+            } else {
+                resource = resourceService.uploadResource(userId, title, description, tagIds, file);
+            }
             return ApiResponse.success("资源上传成功", resource);
         } catch (Exception e) {
             return ApiResponse.failed(e.getMessage());
@@ -171,50 +181,6 @@ public class ResourceController {
     }
 
     /**
-     * 收藏资源
-     * @param id 资源ID
-     * @param session HTTP会话
-     * @return 操作结果
-     */
-    @PostMapping("/{id}/favorite")
-    public ApiResponse<Void> favoriteResource(@PathVariable Integer id, HttpSession session) {
-        // 检查用户是否登录
-        Integer userId = (Integer) session.getAttribute("userId");
-        if (userId == null) {
-            return ApiResponse.unauthorized();
-        }
-        
-        try {
-            resourceService.favoriteResource(id, userId);
-            return ApiResponse.success("资源已收藏", null);
-        } catch (Exception e) {
-            return ApiResponse.failed(e.getMessage());
-        }
-    }
-
-    /**
-     * 取消收藏
-     * @param id 资源ID
-     * @param session HTTP会话
-     * @return 操作结果
-     */
-    @DeleteMapping("/{id}/favorite")
-    public ApiResponse<Void> unfavoriteResource(@PathVariable Integer id, HttpSession session) {
-        // 检查用户是否登录
-        Integer userId = (Integer) session.getAttribute("userId");
-        if (userId == null) {
-            return ApiResponse.unauthorized();
-        }
-        
-        try {
-            resourceService.unfavoriteResource(id, userId);
-            return ApiResponse.success("已取消收藏", null);
-        } catch (Exception e) {
-            return ApiResponse.failed(e.getMessage());
-        }
-    }
-
-    /**
      * 记录资源下载
      * @param id 资源ID
      * @param session HTTP会话
@@ -234,6 +200,134 @@ public class ResourceController {
             return ApiResponse.success(downloadUrl);
         } catch (Exception e) {
             return ApiResponse.failed(e.getMessage());
+        }
+    }
+
+    /**
+     * 点赞资源
+     * @param id 资源ID
+     * @param session HTTP会话
+     * @return 操作结果
+     */
+    @PostMapping("/{id}/like")
+    public ApiResponse<Void> likeResource(@PathVariable Integer id, HttpSession session) {
+        // 检查用户是否登录
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.unauthorized();
+        }
+        
+        try {
+            resourceService.likeResource(id, userId);
+            return ApiResponse.success("点赞成功", null);
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
+    }
+    
+    /**
+     * 取消点赞资源
+     * @param id 资源ID
+     * @param session HTTP会话
+     * @return 操作结果
+     */
+    @DeleteMapping("/{id}/like")
+    public ApiResponse<Void> unlikeResource(@PathVariable Integer id, HttpSession session) {
+        // 检查用户是否登录
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.unauthorized();
+        }
+        
+        try {
+            resourceService.unlikeResource(id, userId);
+            return ApiResponse.success("取消点赞成功", null);
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
+    }
+    
+    /**
+     * 获取用户点赞的资源列表
+     * @param page 页码(默认1)
+     * @param size 每页数量(默认10)
+     * @param session HTTP会话
+     * @return 资源列表和总数
+     */
+    @GetMapping("/liked")
+    public ApiResponse<ResourceListResponse> getLikedResources(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            HttpSession session) {
+        // 检查用户是否登录
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.unauthorized();
+        }
+        
+        try {
+            return ApiResponse.success(resourceService.getLikedResources(userId, page, size));
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
+    }
+
+    /**
+     * 使用已上传的文件创建资源
+     * @param title 资源标题
+     * @param description 资源描述
+     * @param filePath 已上传的文件路径
+     * @param coverPath 已上传的封面图路径（可选）
+     * @param tagIds 标签ID列表
+     * @param session HTTP会话
+     * @return 新创建的资源对象
+     */
+    @PostMapping("/create")
+    public ApiResponse<ResourceDTO> createResource(
+            @RequestParam String title,
+            @RequestParam(required = false) String description,
+            @RequestParam String filePath,
+            @RequestParam(required = false) String coverPath,
+            @RequestParam(required = false) List<Integer> tagIds,
+            HttpSession session) {
+        // 检查用户是否登录
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.unauthorized();
+        }
+        
+        try {
+            ResourceDTO resource = resourceService.createResource(userId, title, description, filePath, coverPath, tagIds);
+            return ApiResponse.success("资源创建成功", resource);
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
+    }
+
+    /**
+     * 上传资源（带封面）
+     */
+    @PostMapping("/upload-with-cover")
+    public ResponseEntity<ApiResponse<ResourceDTO>> uploadResourceWithCover(
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam(value = "tagIds", required = false) List<Integer> tagIds,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "cover", required = false) MultipartFile cover,
+            HttpSession session) {
+        
+        // 获取当前登录用户
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.ok(ApiResponse.unauthorized());
+        }
+        
+        // 上传带封面的资源
+        try {
+            ResourceDTO resource = resourceService.uploadResourceWithCover(userId, title, description, tagIds, file, cover);
+            return ResponseEntity.ok(ApiResponse.success("上传成功", resource));
+        } catch (Exception e) {
+            return ResponseEntity.ok(ApiResponse.failed(e.getMessage()));
         }
     }
 } 

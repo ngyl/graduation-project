@@ -1,6 +1,6 @@
 package com.animesocial.platform.model.dto;
 
-import lombok.Data;
+import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -8,6 +8,8 @@ import java.util.List;
  * 帖子数据传输对象
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class PostDTO {
     // 基本信息
     private Integer id;
@@ -22,7 +24,7 @@ public class PostDTO {
     private Integer commentCount;
     
     // 关联信息
-    private UserDTO user;
+    private UserDTO userDTO;
     private List<TagDTO> tags;
     
     // 状态信息

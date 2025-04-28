@@ -3,14 +3,14 @@ package com.animesocial.platform.model.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 /**
  * 资源数据传输对象
  * 用于向前端传输资源信息
  */
 @Data
+@AllArgsConstructor
 @NoArgsConstructor
 public class ResourceDTO {
     /**
@@ -49,6 +49,11 @@ public class ResourceDTO {
     private String fileUrl;
     
     /**
+     * 封面图片URL（可选）
+     */
+    private String coverUrl;
+    
+    /**
      * 文件类型
      */
     private String fileType;
@@ -69,9 +74,14 @@ public class ResourceDTO {
     private Integer downloadCount;
     
     /**
-     * 收藏次数
+     * 点赞次数
      */
     private Integer likeCount;
+
+    /**
+     * 收藏次数
+     */
+    private Integer favoriteCount;
     
     /**
      * 资源标签
@@ -82,4 +92,9 @@ public class ResourceDTO {
      * 当前用户是否已收藏该资源
      */
     private Boolean isFavorited;
+
+    /**
+     * 当前用户是否已点赞该资源
+     */
+    private Boolean isLiked;
 } 

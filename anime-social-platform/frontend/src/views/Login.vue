@@ -1,21 +1,6 @@
 <template>
-  <div class="login-container">
-    <div class="back-button">
-      <el-button 
-        type="text" 
-        @click="router.push('/')"
-        class="back-home"
-      >
-        <el-icon><ArrowLeft /></el-icon>
-        返回主页
-      </el-button>
-    </div>
-    <div class="login-content">
-      <div class="login-left">
-        <div class="welcome-image"></div>
-        <h3>欢迎来到动漫社交平台</h3>
-        <p>在这里，与志同道合的动漫爱好者分享你的热爱</p>
-      </div>
+  <app-layout :showFooter="false">
+    <div class="login-page">
       <div class="login-box">
         <div class="login-header">
           <h2>动漫社交平台</h2>
@@ -58,20 +43,35 @@
         </el-form>
       </div>
     </div>
-  </div>
+  </app-layout>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
-import { ArrowLeft } from '@element-plus/icons-vue'
+import AppLayout from '@/components/AppLayout.vue'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 const loginFormRef = ref()
 const loading = ref(false)
+const redirectPath = ref('/')
+
+// 获取重定向地址
+onMounted(() => {
+  const redirect = route.query.redirect as string
+  if (redirect) {
+    redirectPath.value = redirect
+  }
+
+  // 如果已经登录，直接跳转
+  if (userStore.isLoggedIn) {
+    router.push(redirectPath.value)
+  }
+})
 
 const loginForm = reactive({
   username: '',
@@ -99,7 +99,9 @@ const handleLogin = async () => {
         const success = await userStore.loginUser(loginForm.username, loginForm.password)
         if (success) {
           ElMessage.success('登录成功')
-          router.push('/')
+          
+          // 如果有重定向地址，登录后跳转到该地址
+          router.push(redirectPath.value)
         } else {
           ElMessage.error('登录失败，请检查用户名和密码')
         }
@@ -114,233 +116,79 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.login-container {
-  min-height: 100vh;
-  background: linear-gradient(120deg, #e0c3fc 0%, #8ec5fc 100%);
-  padding: 20px;
-  position: relative;
-  overflow: hidden;
-}
-
-.back-button {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 10;
-}
-
-.back-home {
+.login-page {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: 5px;
-  color: #fff;
-  font-size: 16px;
-  padding: 10px 20px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-}
-
-.back-home:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateX(-5px);
-}
-
-.login-content {
-  max-width: 1200px;
-  margin: 40px auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 40px;
+  min-height: 80vh;
   padding: 20px;
-}
-
-.login-left {
-  flex: 1;
-  display: none;
-  text-align: center;
-  color: #fff;
-}
-
-.welcome-image {
-  width: 100%;
-  height: 300px;
-  background: url('@/assets/images/welcome.png') center/contain no-repeat;
-  margin-bottom: 30px;
-}
-
-.login-left h3 {
-  font-size: 28px;
-  margin-bottom: 15px;
-  font-weight: 600;
-}
-
-.login-left p {
-  font-size: 16px;
-  line-height: 1.6;
-  opacity: 0.9;
 }
 
 .login-box {
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
   padding: 40px;
-  background-color: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(20px);
-  position: relative;
-  z-index: 1;
-  animation: fadeIn 0.6s ease-out;
+  text-align: center;
+  transition: transform 0.3s ease;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.login-box:hover {
+  transform: translateY(-5px);
 }
 
 .login-header {
-  text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .login-header h2 {
-  color: #2c3e50;
-  font-size: 32px;
-  margin-bottom: 15px;
-  font-weight: 700;
-  background: linear-gradient(120deg, #4a90e2, #8e44ad);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #409eff;
+  font-size: 28px;
+  margin-bottom: 10px;
 }
 
 .login-header p {
   color: #666;
   font-size: 16px;
-  line-height: 1.6;
 }
 
 .login-form {
-  margin-top: 30px;
+  text-align: left;
 }
 
 .custom-input {
-  margin-bottom: 20px;
-}
-
-.custom-input :deep(.el-input__wrapper) {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  padding: 12px 20px;
-  background: rgba(255, 255, 255, 0.8);
-  transition: all 0.3s ease;
-}
-
-.custom-input :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.custom-input :deep(.el-input__inner) {
-  font-size: 15px;
+  height: 50px;
 }
 
 .login-button {
   width: 100%;
-  height: 48px;
-  border-radius: 12px;
+  height: 50px;
   font-size: 16px;
-  font-weight: 600;
-  background: linear-gradient(120deg, #4a90e2, #8e44ad);
-  border: none;
-  transition: all 0.3s ease;
   margin-top: 10px;
 }
 
-.login-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(74, 144, 226, 0.3);
-}
-
-.login-button:active {
-  transform: translateY(0);
-}
-
 .form-footer {
+  margin-top: 20px;
   text-align: center;
-  margin-top: 30px;
 }
 
 .register-link {
-  color: #4a90e2;
+  color: #409eff;
   text-decoration: none;
-  font-size: 15px;
-  font-weight: 500;
   transition: all 0.3s ease;
-  position: relative;
 }
 
-.register-link::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(120deg, #4a90e2, #8e44ad);
-  transform: scaleX(0);
-  transition: transform 0.3s ease;
+.register-link:hover {
+  color: #66b1ff;
+  text-decoration: underline;
 }
 
-.register-link:hover::after {
-  transform: scaleX(1);
-}
-
-/* 响应式设计 */
-@media (min-width: 1024px) {
-  .login-left {
-    display: block;
-  }
-  
-  .login-box {
-    flex: 0 0 400px;
-  }
-}
-
+/* 响应式样式 */
 @media (max-width: 768px) {
-  .login-content {
-    margin: 20px auto;
-    padding: 10px;
-  }
-
   .login-box {
-    padding: 30px 25px;
-    margin: 0 auto;
-  }
-
-  .back-home {
-    font-size: 14px;
-    padding: 8px 15px;
-  }
-}
-
-@media (max-width: 480px) {
-  .login-box {
-    padding: 25px 20px;
-  }
-
-  .back-button {
-    top: 10px;
-    left: 10px;
+    padding: 30px 20px;
   }
 }
 </style> 

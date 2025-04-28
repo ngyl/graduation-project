@@ -1,79 +1,67 @@
 <template>
-  <div class="friends-container">
-    <el-tabs v-model="activeTab">
-      <el-tab-pane label="我关注的" name="following">
-        <div v-if="followings.length === 0" class="empty-tip">
-          暂无关注的用户
-        </div>
-        <div v-else class="user-list">
-          <div v-for="user in followings" :key="user.id" class="user-card">
-            <div class="user-avatar" @click="goToProfile(user.id)">
-              <img :src="user.avatar || '/default-avatar.jpg'" alt="用户头像">
-            </div>
-            <div class="user-info">
-              <div class="username" @click="goToProfile(user.id)">{{ user.username }}</div>
-              <div class="bio">{{ user.bio || '这个人很懒，什么都没留下' }}</div>
-            </div>
-            <div class="action-btn">
-              <el-button type="danger" size="small" @click="unfollow(user.id)">取消关注</el-button>
+  <app-layout>
+    <div class="friends-container">
+      <el-tabs v-model="activeTab">
+        <el-tab-pane label="我关注的" name="following">
+          <div v-if="followings.length === 0" class="empty-tip">
+            暂无关注的用户
+          </div>
+          <div v-else class="user-list">
+            <div v-for="user in followings" :key="user.id" class="user-card">
+              <div class="user-avatar" @click="goToProfile(user.id)">
+                <img :src="user.avatar || '/default-avatar.jpg'" alt="用户头像">
+              </div>
+              <div class="user-info">
+                <div class="username" @click="goToProfile(user.id)">{{ user.username }}</div>
+                <div class="bio">{{ user.bio || '这个人很懒，什么都没留下' }}</div>
+              </div>
+              <div class="action-btn">
+                <el-button type="danger" size="small" @click="unfollow(user.id)">取消关注</el-button>
+              </div>
             </div>
           </div>
-        </div>
-      </el-tab-pane>
-      
-      <el-tab-pane label="关注我的" name="followers">
-        <div v-if="followers.length === 0" class="empty-tip">
-          暂无粉丝
-        </div>
-        <div v-else class="user-list">
-          <div v-for="user in followers" :key="user.id" class="user-card">
-            <div class="user-avatar" @click="goToProfile(user.id)">
-              <img :src="user.avatar || '/default-avatar.jpg'" alt="用户头像">
-            </div>
-            <div class="user-info">
-              <div class="username" @click="goToProfile(user.id)">{{ user.username }}</div>
-              <div class="bio">{{ user.bio || '这个人很懒，什么都没留下' }}</div>
-            </div>
-            <div class="action-btn">
-              <el-button 
-                v-if="isFollowing(user.id)" 
-                type="danger" 
-                size="small" 
-                @click="unfollow(user.id)"
-              >取消关注</el-button>
-              <el-button 
-                v-else 
-                type="primary" 
-                size="small" 
-                @click="follow(user.id)"
-              >关注</el-button>
+        </el-tab-pane>
+        
+        <el-tab-pane label="关注我的" name="followers">
+          <div v-if="followers.length === 0" class="empty-tip">
+            暂无粉丝
+          </div>
+          <div v-else class="user-list">
+            <div v-for="user in followers" :key="user.id" class="user-card">
+              <div class="user-avatar" @click="goToProfile(user.id)">
+                <img :src="user.avatar || '/default-avatar.jpg'" alt="用户头像">
+              </div>
+              <div class="user-info">
+                <div class="username" @click="goToProfile(user.id)">{{ user.username }}</div>
+                <div class="bio">{{ user.bio || '这个人很懒，什么都没留下' }}</div>
+              </div>
             </div>
           </div>
-        </div>
-      </el-tab-pane>
-      
-      <el-tab-pane label="互相关注" name="mutual">
-        <div v-if="mutualFriends.length === 0" class="empty-tip">
-          暂无互相关注的好友
-        </div>
-        <div v-else class="user-list">
-          <div v-for="user in mutualFriends" :key="user.id" class="user-card">
-            <div class="user-avatar" @click="goToProfile(user.id)">
-              <img :src="user.avatar || '/default-avatar.jpg'" alt="用户头像">
-            </div>
-            <div class="user-info">
-              <div class="username" @click="goToProfile(user.id)">{{ user.username }}</div>
-              <div class="bio">{{ user.bio || '这个人很懒，什么都没留下' }}</div>
-            </div>
-            <div class="action-btn">
-              <el-button type="success" size="small" @click="sendMessage(user.id)">发消息</el-button>
-              <el-button type="danger" size="small" @click="unfollow(user.id)">取消关注</el-button>
+        </el-tab-pane>
+        
+        <el-tab-pane label="互相关注" name="mutual">
+          <div v-if="mutualFriends.length === 0" class="empty-tip">
+            暂无互相关注的好友
+          </div>
+          <div v-else class="user-list">
+            <div v-for="user in mutualFriends" :key="user.id" class="user-card">
+              <div class="user-avatar" @click="goToProfile(user.id)">
+                <img :src="user.avatar || '/default-avatar.jpg'" alt="用户头像">
+              </div>
+              <div class="user-info">
+                <div class="username" @click="goToProfile(user.id)">{{ user.username }}</div>
+                <div class="bio">{{ user.bio || '这个人很懒，什么都没留下' }}</div>
+              </div>
+              <div class="action-btn">
+                <el-button type="success" size="small" @click="sendMessage(user.id)">发消息</el-button>
+                <el-button type="danger" size="small" @click="unfollow(user.id)">取消关注</el-button>
+              </div>
             </div>
           </div>
-        </div>
-      </el-tab-pane>
-    </el-tabs>
-  </div>
+        </el-tab-pane>
+      </el-tabs>
+    </div>
+  </app-layout>
 </template>
 
 <script setup lang="ts">
@@ -81,20 +69,19 @@ import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { useUserStore } from '@/stores/user';
-import { getFollowings, getFollowers, getMutualFriends, followUser, unfollowUser } from '@/api/friendship';
-import type { FollowingUser } from '@/types/user';
+import { getUserFollowing, getUserFollowers, getUserMutual, toggleFollow } from '@/api/user';
+import type { UserDTO } from '@/types/user';  
+import AppLayout from '@/components/AppLayout.vue';
 
-// 定义用户接口，扩展FollowingUser
-interface User extends FollowingUser {}
 
 const router = useRouter();
 const userStore = useUserStore();
 const userId = userStore.userInfo?.id;
 
 const activeTab = ref('following');
-const followings = ref<User[]>([]);
-const followers = ref<User[]>([]);
-const mutualFriends = ref<User[]>([]);
+const followings = ref<UserDTO[]>([]);
+const followers = ref<UserDTO[]>([]);
+const mutualFriends = ref<UserDTO[]>([]);
 const followingIds = ref<Set<number>>(new Set());
 
 // 页面加载时获取数据
@@ -112,30 +99,23 @@ onMounted(async () => {
 async function loadData() {
   try {
     // 获取关注列表
-    const followingRes = await getFollowings(userId as number);
-    // 使用any类型断言绕过类型检查
-    const followingData = (followingRes as any);
-    if (followingData.code === 200) {
-      followings.value = followingData.data;
+    const followingRes = await getUserFollowing(userId as number);
+    if (followingRes.data.code === 200) {
+      followings.value = followingRes.data.data;
+      // 更新关注ID集合
+      followingIds.value = new Set(followings.value.map(user => user.id));
     }
     
-    // 更新关注ID集合
-    followingIds.value = new Set(followings.value.map(user => user.id));
-    
     // 获取粉丝列表
-    const followerRes = await getFollowers(userId as number);
-    // 使用any类型断言绕过类型检查
-    const followerData = (followerRes as any);
-    if (followerData.code === 200) {
-      followers.value = followerData.data;
+    const followerRes = await getUserFollowers(userId as number);
+    if (followerRes.data.code === 200) {
+      followers.value = followerRes.data.data;
     }
     
     // 获取互相关注列表
-    const mutualRes = await getMutualFriends(userId as number);
-    // 使用any类型断言绕过类型检查
-    const mutualData = (mutualRes as any);
-    if (mutualData.code === 200) {
-      mutualFriends.value = mutualData.data;
+    const mutualRes = await getUserMutual(userId as number);
+    if (mutualRes.data.code === 200) {
+      mutualFriends.value = mutualRes.data.data;
     }
   } catch (error) {
     console.error('加载数据失败', error);
@@ -148,28 +128,30 @@ function isFollowing(id: number): boolean {
   return followingIds.value.has(id);
 }
 
+// 统一操作关注状态的函数
+async function toggleFollowStatus(friendId: number, isUnfollow: boolean) {
+  try {
+    const response = await toggleFollow(friendId);
+    if (response.data.code === 200) {
+      ElMessage.success(isUnfollow ? '已取消关注' : '关注成功');
+      await loadData(); // 重新加载数据
+    } else {
+      ElMessage.error(response.data.message || (isUnfollow ? '取消关注失败' : '关注失败'));
+    }
+  } catch (error) {
+    console.error(isUnfollow ? '取消关注失败' : '关注失败', error);
+    ElMessage.error(isUnfollow ? '取消关注失败' : '关注失败');
+  }
+}
+
 // 关注用户
 async function follow(friendId: number) {
-  try {
-    await followUser(friendId);
-    ElMessage.success('关注成功');
-    await loadData(); // 重新加载数据
-  } catch (error) {
-    console.error('关注失败', error);
-    ElMessage.error('关注失败');
-  }
+  await toggleFollowStatus(friendId, false);
 }
 
 // 取消关注
 async function unfollow(friendId: number) {
-  try {
-    await unfollowUser(friendId);
-    ElMessage.success('已取消关注');
-    await loadData(); // 重新加载数据
-  } catch (error) {
-    console.error('取消关注失败', error);
-    ElMessage.error('取消关注失败');
-  }
+  await toggleFollowStatus(friendId, true);
 }
 
 // 跳转到用户主页
@@ -179,7 +161,7 @@ function goToProfile(id: number) {
 
 // 发送私信
 function sendMessage(id: number) {
-  router.push(`/messages/${id}`);
+  router.push(`/messages?userId=${id}`);
 }
 </script>
 

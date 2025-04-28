@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
-import java.util.stream.Collectors;
+import java.util.Collections;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,12 +18,12 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import com.animesocial.platform.exception.BusinessException;
 import com.animesocial.platform.model.Post;
 import com.animesocial.platform.model.Resource;
+import com.animesocial.platform.model.Tag;
 import com.animesocial.platform.model.User;
 import com.animesocial.platform.model.dto.LoginRequest;
 import com.animesocial.platform.model.dto.RegisterRequest;
 import com.animesocial.platform.model.dto.TagDTO;
 import com.animesocial.platform.model.dto.UpdateUserInfoRequest;
-import com.animesocial.platform.model.dto.UpdateUserTagsRequest;
 import com.animesocial.platform.model.dto.UserDTO;
 import com.animesocial.platform.model.dto.UserDetailResponse;
 import com.animesocial.platform.repository.*;
@@ -60,15 +60,15 @@ public class UserServiceImpl implements UserService {
     private FriendshipRepository friendshipRepository;
     
     @Autowired
-    private TagRepository tagRepository;
-    
-    @Autowired
-    private TagService tagService;
+    private UserTagRepository userTagRepository;
     
     @Autowired
     private UserTagService userTagService;
     
-    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    @Autowired
+    private TagService tagService;
+    
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     
     /**
      * 用户注册实现
@@ -102,19 +102,6 @@ public class UserServiceImpl implements UserService {
         
         // 保存用户
         userRepository.insert(user);
-        
-        // 如果注册请求包含标签，则添加用户标签
-        if (registerRequest.getTagIds() != null && !registerRequest.getTagIds().isEmpty()) {
-            for (Integer tagId : registerRequest.getTagIds()) {
-                try {
-                    // 验证标签并添加
-                    tagService.addUserTag(user.getId(), tagId);
-                } catch (BusinessException e) {
-                    // 记录错误但不中断流程
-                    log.error("添加用户标签失败: {}", e.getMessage());
-                }
-            }
-        }
     }
 
     /**
@@ -130,12 +117,12 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public User login(LoginRequest loginRequest) {
-        User user = userRepository.findByUsername(loginRequest.getUsername());
-        
         // 验证用户是否存在
-        if (user == null) {
+        if (!userRepository.existsByIdOrUsername(null, loginRequest.getUsername())) {
             throw new BusinessException("用户名或密码错误");
         }
+        
+        User user = userRepository.findByUsername(loginRequest.getUsername());
         
         // 验证用户是否被禁用
         if (user.getStatus() != 1) {
@@ -155,8 +142,21 @@ public class UserServiceImpl implements UserService {
         ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
             HttpServletRequest request = attributes.getRequest();
-            HttpSession session = request.getSession();
+            HttpSession session = request.getSession(true); // 确保创建新会话
             session.setAttribute("user", user);
+            session.setAttribute("userId", user.getId());
+            session.setAttribute("username", user.getUsername());
+            session.setAttribute("isAdmin", user.getIsAdmin());
+            
+            // 输出调试信息
+            log.info("用户登录成功: {}, 会话ID: {}", user.getUsername(), session.getId());
+            log.info("会话中的属性: user={}, userId={}, username={}, isAdmin={}", 
+                     session.getAttribute("user") != null, 
+                     session.getAttribute("userId"), 
+                     session.getAttribute("username"), 
+                     session.getAttribute("isAdmin"));
+        } else {
+            log.warn("无法获取请求上下文，无法创建会话");
         }
         
         // 在返回前隐藏密码
@@ -165,41 +165,48 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * 根据ID获取用户信息
-     * 
-     * @param id 用户ID
-     * @return 用户DTO对象，如果用户不存在则返回null
+     * 将User实体转换为UserDTO
+     * @param user 用户实体
+     * @return 用户DTO
      */
-    @Override
-    public UserDTO getUserById(Integer id) {
-        User user = userRepository.findById(id);
+    private UserDTO convertToDTO(User user) {
         if (user == null) {
             return null;
         }
         
-        UserDTO userDTO = new UserDTO();
-        BeanUtils.copyProperties(user, userDTO);
+        UserDTO dto = new UserDTO();
+        BeanUtils.copyProperties(user, dto);
         
         // 获取用户标签
         try {
-            List<TagDTO> tags = tagService.getUserTags(id).getTags();
-            userDTO.setTags(tags);
+            List<Tag> tagEntities = userTagRepository.findTagsByUserId(user.getId());
+            List<TagDTO> tags = tagEntities.stream()
+                .map(tagService::convertToDTO)
+                .toList();
+            dto.setTags(tags);
         } catch (Exception e) {
             log.error("获取用户标签失败: {}", e.getMessage());
         }
         
-        return userDTO;
+        // 获取统计数据
+        dto.setPostCount(postRepository.countByUserId(user.getId()));
+        dto.setFollowingCount(friendshipRepository.countFollowing(user.getId()));
+        dto.setFollowerCount(friendshipRepository.countFollowers(user.getId()));
+        dto.setFavoriteCount(favoriteRepository.countByUserId(user.getId()));
+        
+        return dto;
     }
 
-    /**
-     * 根据用户名获取用户信息
-     * 
-     * @param username 用户名
-     * @return 用户对象，如果用户不存在则返回null
-     */
     @Override
-    public User getByUsername(String username) {
-        return userRepository.findByUsername(username);
+    public UserDTO getUserDTOById(Integer id) {
+        User user = userRepository.findById(id);
+        return convertToDTO(user);
+    }
+
+    @Override
+    public UserDTO getByUserDTOname(String username) {
+        User user = userRepository.findByUsername(username);
+        return convertToDTO(user);
     }
 
     /**
@@ -210,7 +217,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public boolean isUsernameExist(String username) {
-        return userRepository.findByUsername(username) != null;
+        return userRepository.existsByIdOrUsername(null, username);
     }
 
     /**
@@ -220,20 +227,11 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public UserDTO getCurrentUser() {
-        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attributes == null) {
+        Integer currentUserId = getCurrentUserId();
+        if (currentUserId == null) {
             return null;
         }
-        
-        HttpServletRequest request = attributes.getRequest();
-        HttpSession session = request.getSession();
-        User user = (User) session.getAttribute("user");
-        
-        if (user == null) {
-            return null;
-        }
-        
-        return getUserById(user.getId());
+        return getUserDTOById(currentUserId);
     }
 
     /**
@@ -250,13 +248,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDetailResponse getUserDetail(Integer id) {
         // 验证用户是否存在
-        User user = userRepository.findById(id);
+        UserDTO user = convertToDTO(userRepository.findById(id));
         if (user == null) {
             throw new BusinessException("用户不存在");
         }
-        
-        // 隐藏敏感信息
-        user.hideSensitiveInfo();
         
         // 创建响应对象
         UserDetailResponse response = new UserDetailResponse();
@@ -264,7 +259,10 @@ public class UserServiceImpl implements UserService {
         
         // 获取用户标签
         try {
-            List<TagDTO> tags = tagService.getUserTags(id).getTags();
+            List<Tag> tagEntities = userTagRepository.findTagsByUserId(id);
+            List<TagDTO> tags = tagEntities.stream()
+                .map(tagService::convertToDTO)
+                .toList();
             response.setTags(tags);
         } catch (Exception e) {
             log.error("获取用户标签失败: {}", e.getMessage());
@@ -296,20 +294,40 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * 获取用户的帖子列表
+     * 分页获取用户的帖子列表
      * 
      * @param id 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 帖子列表，按创建时间降序排序
      */
     @Override
-    public List<Post> getUserPosts(Integer userId) {
+    public List<Post> getUserPosts(Integer userId, Integer page, Integer size) {
         // 验证用户是否存在
-        User user = userRepository.findById(userId);
-        if (user == null) {
+        if (!userRepository.existsByIdOrUsername(userId, null)) {
             throw new BusinessException("用户不存在");
         }
         
-        return postRepository.findByUserId(userId);
+        int offset = (page - 1) * size;
+        return postRepository.findByUserId(userId, offset, size);
+    }
+
+    /**
+     *  分页获取用户所上传的资源
+     *  @param userId 用户ID
+     *  @param page 页码
+     *  @param size 每页数量
+     *  @return 资源列表，按创建时间降序排序
+     */
+    @Override
+    public List<Resource> getUserResources(Integer userId, Integer page, Integer size) {
+        // 验证用户是否存在
+        if (!userRepository.existsByIdOrUsername(userId, null)) {
+            throw new BusinessException("用户不存在");
+        }
+        
+        int offset = (page - 1) * size;
+        return resourceRepository.findByUserId(userId, offset, size);
     }
 
     /**
@@ -319,14 +337,14 @@ public class UserServiceImpl implements UserService {
      * @return 资源列表，按收藏时间降序排序
      */
     @Override
-    public List<Resource> getUserFavorites(Integer userId) {
+    public List<Resource> getUserFavorites(Integer userId, Integer page, Integer size) {
         // 验证用户是否存在
-        User user = userRepository.findById(userId);
-        if (user == null) {
+        if (!userRepository.existsByIdOrUsername(userId, null)) {
             throw new BusinessException("用户不存在");
         }
         
-        return resourceRepository.findByUserId(userId);
+        int offset = (page - 1) * size;
+        return resourceRepository.findFavoritesByUserId(userId, offset, size);
     }
 
     /**
@@ -342,33 +360,21 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public User updateUserInfo(Integer id, UpdateUserInfoRequest request) {
-        User user = userRepository.findById(id);
-        if (user == null) {
+    public UserDTO updateUserInfo(Integer id, UpdateUserInfoRequest request) {
+        // 验证用户是否存在
+        if (!userRepository.existsByIdOrUsername(id, null)) {
             throw new BusinessException("用户不存在");
         }
         
+        User user = userRepository.findById(id);
+        user.hideSensitiveInfo();
         // 更新用户信息
         user.setAvatar(request.getAvatar());
         user.setBio(request.getBio());
-        
         userRepository.update(user);
         
-        // 更新用户标签
-        if (request.getTagIds() != null) {
-            try {
-                // 创建UpdateUserTagsRequest对象
-                UpdateUserTagsRequest tagsRequest = new UpdateUserTagsRequest();
-                tagsRequest.setTagIds(request.getTagIds());
-                tagService.updateUserTags(id, tagsRequest);
-            } catch (Exception e) {
-                log.error("更新用户标签失败: {}", e.getMessage());
-            }
-        }
-        
-        // 在返回前隐藏密码
-        user.hideSensitiveInfo();
-        return user;
+        // 返回更新后的用户信息
+        return getUserDTOById(id);
     }
     
     /**
@@ -380,8 +386,8 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public void updateUserStatus(Integer id, Integer status) {
-        User user = userRepository.findById(id);
-        if (user == null) {
+        // 验证用户是否存在
+        if (!userRepository.existsByIdOrUsername(id, null)) {
             throw new BusinessException("用户不存在");
         }
         
@@ -403,20 +409,11 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public List<UserDTO> getAllUsers(Integer page, Integer size) {
-        // 计算偏移量
         int offset = (page - 1) * size;
-        
-        // 获取用户列表
         List<User> users = userRepository.findAll(offset, size);
-        
-        // 转换为DTO
         return users.stream()
-            .map(user -> {
-                UserDTO dto = new UserDTO();
-                BeanUtils.copyProperties(user, dto);
-                return dto;
-            })
-            .collect(Collectors.toList());
+            .map(this::convertToDTO)
+            .toList();
     }
     
     /**
@@ -426,17 +423,10 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     public List<UserDTO> getAllAdmins() {
-        // 获取管理员用户列表
         List<User> admins = userRepository.findAllAdmins();
-        
-        // 转换为DTO
         return admins.stream()
-            .map(user -> {
-                UserDTO dto = new UserDTO();
-                BeanUtils.copyProperties(user, dto);
-                return dto;
-            })
-            .collect(Collectors.toList());
+            .map(this::convertToDTO)
+            .toList();
     }
     
     /**
@@ -449,26 +439,27 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<UserDTO> getRecommendedUsers(Integer userId, Integer limit) {
         // 验证用户存在
-        User user = userRepository.findById(userId);
+        UserDTO user = convertToDTO(userRepository.findById(userId));
         if (user == null) {
             throw new BusinessException("用户不存在");
         }
         
         // 获取用户的标签
         List<Integer> userTagIds = userTagService.getUserTags(userId).stream()
-                .map(tag -> tag.getId())
-                .collect(Collectors.toList());
+                .map(Tag::getId)
+                .toList();
         
         if (userTagIds.isEmpty()) {
             // 如果用户没有标签，返回随机用户
-            List<User> randomUsers = userRepository.findRandomUsers(limit);
-            return convertUsersToDTO(randomUsers);
+            return userRepository.findRandomUsers(limit).stream()
+                    .map(this::convertToDTO)
+                    .toList();
         }
         
         // 查找与这些标签相关的其他用户
         List<Integer> similarUserIds = new ArrayList<>();
         for (Integer tagId : userTagIds) {
-            List<Integer> userIds = userTagService.getUsersWithTag(tagId);
+            List<Integer> userIds = userTagService.getSimilarUsers(tagId, limit);
             similarUserIds.addAll(userIds);
         }
         
@@ -477,8 +468,9 @@ public class UserServiceImpl implements UserService {
         
         // 如果没有找到相似用户，返回随机用户
         if (similarUserIds.isEmpty()) {
-            List<User> randomUsers = userRepository.findRandomUsers(limit);
-            return convertUsersToDTO(randomUsers);
+            return userRepository.findRandomUsers(limit).stream()
+                    .map(this::convertToDTO)
+                    .toList();
         }
         
         // 统计相同标签数量
@@ -492,18 +484,18 @@ public class UserServiceImpl implements UserService {
                 .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
                 .limit(limit)
                 .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
+                .toList();
         
         // 获取用户详情
-        List<User> recommendedUsers = new ArrayList<>();
+        List<UserDTO> recommendedUsers = new ArrayList<>();
         for (Integer recommendedUserId : sortedUserIds) {
-            User recommendedUser = userRepository.findById(recommendedUserId);
+            UserDTO recommendedUser = convertToDTO(userRepository.findById(recommendedUserId));
             if (recommendedUser != null) {
                 recommendedUsers.add(recommendedUser);
             }
         }
         
-        return convertUsersToDTO(recommendedUsers);
+        return recommendedUsers;
     }
     
     /**
@@ -525,31 +517,9 @@ public class UserServiceImpl implements UserService {
         
         // 在用户名和个人简介中搜索
         String searchPattern = "%" + keyword.trim() + "%";
-        List<User> users = userRepository.findByUsernameOrBioLike(searchPattern, offset, size);
-        
-        return convertUsersToDTO(users);
-    }
-    
-    /**
-     * 将用户列表转换为DTO列表
-     */
-    private List<UserDTO> convertUsersToDTO(List<User> users) {
-        return users.stream()
-            .map(user -> {
-                UserDTO dto = new UserDTO();
-                BeanUtils.copyProperties(user, dto);
-                
-                // 获取用户标签
-                try {
-                    List<TagDTO> tags = tagService.getUserTags(user.getId()).getTags();
-                    dto.setTags(tags);
-                } catch (Exception e) {
-                    log.error("获取用户标签失败: {}", e.getMessage());
-                }
-                
-                return dto;
-            })
-            .collect(Collectors.toList());
+        return userRepository.findByUsernameOrBioLike(searchPattern, offset, size).stream()
+                .map(this::convertToDTO)
+                .toList();   
     }
     
     /**
@@ -582,138 +552,108 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * 关注用户
+     * 关注或取消关注用户
+     * 根据当前关注状态自动判断：
+     * - 如果未关注，则创建关注关系
+     * - 如果已关注，则取消关注
+     * 
      * @param userId 当前用户ID
-     * @param followId 被关注用户ID
-     * @return 操作结果描述
+     * @param targetId 目标用户ID
+     * @return 操作结果描述，例如"关注成功"或"已取消关注"
      */
     @Override
     @Transactional
-    public String followUser(Integer userId, Integer followId) {
+    public String toggleFollow(Integer userId, Integer targetId) {
         // 验证当前用户
-        User user = userRepository.findById(userId);
-        if (user == null) {
+        if (!userRepository.existsByIdOrUsername(userId, null)) {
             throw new BusinessException("用户不存在");
         }
         
-        // 验证被关注用户
-        User followUser = userRepository.findById(followId);
-        if (followUser == null) {
-            throw new BusinessException("要关注的用户不存在");
+        // 验证目标用户
+        if (!userRepository.existsByIdOrUsername(targetId, null)) {
+            throw new BusinessException("目标用户不存在");
         }
         
         // 检查是否自己关注自己
-        if (userId.equals(followId)) {
+        if (userId.equals(targetId)) {
             throw new BusinessException("不能关注自己");
         }
         
-        // 检查是否已经关注
-        boolean isFollowing = friendshipRepository.exists(userId, followId);
+        // 检查当前关注状态
+        boolean isFollowing = friendshipRepository.exists(userId, targetId);
+        
         if (isFollowing) {
-            throw new BusinessException("已经关注过该用户");
+            // 已关注，执行取消关注操作
+            boolean isFollowedBack = friendshipRepository.exists(targetId, userId);
+            if (isFollowedBack) {
+                // 如果对方关注了自己，将对方的关注状态改为单向关注
+                friendshipRepository.updateStatus(targetId, userId, 0);
+            }
+            
+            // 删除关注关系
+            friendshipRepository.delete(userId, targetId);
+            return "已取消关注";
+        } else {
+            // 未关注，执行关注操作
+            friendshipRepository.insert(userId, targetId);
+            
+            // 检查对方是否已关注自己，如果是则互相关注
+            boolean isFollowedBack = friendshipRepository.exists(targetId, userId);
+            if (isFollowedBack) {
+                // 更新为互相关注状态
+                friendshipRepository.updateStatus(userId, targetId, 1);
+                friendshipRepository.updateStatus(targetId, userId, 1);
+                return "互相关注成功";
+            }
+            
+            return "关注成功";
         }
-        
-        // 创建关注关系
-        friendshipRepository.insert(userId, followId);
-        
-        // 检查对方是否已关注自己，如果是则互相关注
-        boolean isFollowedBack = friendshipRepository.exists(followId, userId);
-        if (isFollowedBack) {
-            // 更新为互相关注状态
-            friendshipRepository.updateStatus(userId, followId, 1);
-            friendshipRepository.updateStatus(followId, userId, 1);
-            return "互相关注成功";
-        }
-        
-        return "关注成功";
     }
 
     /**
-     * 取消关注
-     * @param userId 当前用户ID
-     * @param followId 被取消关注用户ID
-     * @return 操作结果描述
-     */
-    @Override
-    @Transactional
-    public String unfollowUser(Integer userId, Integer followId) {
-        // 验证关注关系是否存在
-        boolean isFollowing = friendshipRepository.exists(userId, followId);
-        if (!isFollowing) {
-            throw new BusinessException("未关注该用户");
-        }
-        
-        // 检查是否互相关注
-        boolean isFollowedBack = friendshipRepository.exists(followId, userId);
-        if (isFollowedBack) {
-            // 如果对方关注了自己，将对方的关注状态改为单向关注
-            friendshipRepository.updateStatus(followId, userId, 0);
-        }
-        
-        // 删除关注关系
-        friendshipRepository.delete(userId, followId);
-        
-        return "已取消关注";
-    }
-
-    /**
-     * 获取用户的关注列表
+     * 分页获取用户的关注列表
      * @param userId 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 关注的用户列表
      */
     @Override
-    public List<User> getUserFollowing(Integer userId) {
-        // 验证用户是否存在
-        User user = userRepository.findById(userId);
-        if (user == null) {
-            throw new BusinessException("用户不存在");
-        }
-        
-        // 获取关注的用户ID列表
-        List<Integer> followingIds = friendshipRepository.findFollowingIds(userId);
-        
-        // 获取用户信息
-        List<User> followingUsers = new ArrayList<>();
-        for (Integer followId : followingIds) {
-            User followUser = userRepository.findById(followId);
-            if (followUser != null) {
-                // 隐藏敏感信息
-                followUser.hideSensitiveInfo();
-                followingUsers.add(followUser);
-            }
-        }
-        
-        return followingUsers;
+    public List<UserDTO> getUserFollowing(Integer userId, Integer page, Integer size) {
+        int offset = (page - 1) * size;
+        List<User> users = userRepository.findFollowingByUserId(userId, offset, size);
+        return users.stream()
+            .map(this::convertToDTO)
+            .toList();
     }
 
     /**
-     * 获取用户的粉丝列表
+     * 分页获取用户的粉丝列表
      * @param userId 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 粉丝用户列表
      */
     @Override
-    public List<User> getUserFollowers(Integer userId) {
-        // 验证用户是否存在
-        User user = userRepository.findById(userId);
-        if (user == null) {
-            throw new BusinessException("用户不存在");
-        }
-        
-        // 获取粉丝用户ID列表
-        List<Integer> followerIds = friendshipRepository.findFollowerIds(userId);
-        
-        // 获取用户信息
-        List<User> followers = new ArrayList<>();
-        for (Integer followerId : followerIds) {
-            User follower = userRepository.findById(followerId);
-            if (follower != null) {
-                // 隐藏敏感信息
-                follower.hideSensitiveInfo();
-                followers.add(follower);
-            }
-        }
-        
-        return followers;
+    public List<UserDTO> getUserFollowers(Integer userId, Integer page, Integer size) {
+        int offset = (page - 1) * size;
+        List<User> users = userRepository.findFollowersByUserId(userId, offset, size);
+        return users.stream()
+            .map(this::convertToDTO)
+            .toList();
+    }
+
+    /**
+     * 获取用户相互关注列表
+     * @param userId 用户ID
+     * @return 相互关注用户列表
+     */
+    @Override
+    public List<UserDTO> getMutualFriends(Integer userId, Integer page, Integer size) {
+        int offset = (page - 1) * size;
+        List<User> users = userRepository.findMutualFriendsByUserId(userId, offset, size);
+        return users.stream()
+            .map(this::convertToDTO)
+            .toList();
     }
 
     /**
@@ -726,4 +666,37 @@ public class UserServiceImpl implements UserService {
     public boolean isFollowing(Integer userId, Integer followId) {
         return friendshipRepository.exists(userId, followId);
     }
+
+    /**
+     * 获取用户总数
+     * @return 用户总数
+     */
+    @Override
+    public int countUsers() {
+        return userRepository.count();
+    }
+    
+    /**
+     * 根据ID列表批量查询用户
+     * @param ids 用户ID列表
+     * @return 用户DTO列表
+     */
+    @Override
+    public List<UserDTO> findByIds(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        List<UserDTO> users = new ArrayList<>();
+        for (Integer id : ids) {
+            User user = userRepository.findById(id);
+            if (user != null) {
+                users.add(convertToDTO(user));
+            }
+        }
+        
+        return users;
+    }
+
+    
 } 

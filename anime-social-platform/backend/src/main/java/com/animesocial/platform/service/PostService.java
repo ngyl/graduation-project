@@ -1,10 +1,11 @@
 package com.animesocial.platform.service;
 
-import com.animesocial.platform.model.dto.PostDTO;
-import com.animesocial.platform.model.dto.CreatePostRequest;
-import com.animesocial.platform.model.dto.PostListResponse;
-
 import java.util.List;
+import java.util.Map;
+
+import com.animesocial.platform.model.dto.CreatePostRequest;
+import com.animesocial.platform.model.dto.PostDTO;
+import com.animesocial.platform.model.dto.PostListResponse;
 
 /**
  * 帖子服务接口
@@ -20,11 +21,13 @@ public interface PostService {
     PostDTO getPostById(Integer id);
     
     /**
-     * 获取用户的帖子列表
+     * 分页获取用户的帖子列表
      * @param userId 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 帖子列表
      */
-    List<PostDTO> getPostsByUserId(Integer userId);
+    List<PostDTO> getPostsByUserId(Integer userId, Integer page, Integer size);
     
     /**
      * 分页获取帖子列表
@@ -113,4 +116,26 @@ public interface PostService {
      * @return 置顶帖子列表
      */
     List<PostDTO> getTopPosts();
+    
+    /**
+     * 搜索帖子
+     * @param keyword 搜索关键词
+     * @param page 页码
+     * @param size 每页大小
+     * @return 匹配的帖子列表和总数
+     */
+    PostListResponse searchPosts(String keyword, Integer page, Integer size);
+    
+    /**
+     * 获取帖子总数
+     * @return 帖子总数
+     */
+    int countPosts();
+    
+    /**
+     * 根据ID列表批量查询帖子
+     * @param ids 帖子ID列表
+     * @return 帖子列表
+     */
+    List<PostDTO> findByIds(List<Integer> ids);
 } 

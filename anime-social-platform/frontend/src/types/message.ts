@@ -1,7 +1,7 @@
 /**
- * 消息DTO
+ * 基础消息接口
  */
-export interface MessageDTO {
+export interface Message {
   id: number;
   senderId: number;
   senderName: string;
@@ -15,6 +15,13 @@ export interface MessageDTO {
 }
 
 /**
+ * 消息DTO
+ */
+export interface MessageDTO extends Message {
+  // 额外字段可以在这里扩展
+}
+
+/**
  * 聊天好友信息（包含最新消息）
  */
 export interface ChatFriend {
@@ -23,7 +30,7 @@ export interface ChatFriend {
     username: string;
     avatar: string;
   };
-  lastMessage: MessageDTO;
+  lastMessage: Message;
   unreadCount: number;
 }
 
@@ -38,14 +45,10 @@ export interface SendMessageForm {
  * 消息列表响应
  */
 export interface MessagesResponse {
-  data: {
-    list: MessageDTO[];
-    total: number;
-    pageNum: number;
-    pageSize: number;
-  };
-  code: number;
-  message: string;
+  list: Message[];
+  total: number;
+  pageNum: number;
+  pageSize: number;
 }
 
 /**

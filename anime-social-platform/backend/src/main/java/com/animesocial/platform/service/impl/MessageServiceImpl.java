@@ -1,11 +1,12 @@
 package com.animesocial.platform.service.impl;
 
 import com.animesocial.platform.model.Message;
-import com.animesocial.platform.model.User;
 import com.animesocial.platform.model.dto.MessageDTO;
+import com.animesocial.platform.model.dto.UserDTO;
 import com.animesocial.platform.repository.MessageRepository;
-import com.animesocial.platform.repository.UserRepository;
 import com.animesocial.platform.service.MessageService;
+import com.animesocial.platform.service.UserService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,7 @@ public class MessageServiceImpl implements MessageService {
     private MessageRepository messageRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     /**
      * 发送私信
@@ -33,8 +34,8 @@ public class MessageServiceImpl implements MessageService {
     @Transactional
     public Message sendMessage(Integer senderId, Integer receiverId, String content) {
         // 验证发送者和接收者是否存在
-        User sender = userRepository.findById(senderId);
-        User receiver = userRepository.findById(receiverId);
+        UserDTO sender = userService.getUserDTOById(senderId);
+        UserDTO receiver = userService.getUserDTOById(receiverId);
         
         if (sender == null) {
             throw new RuntimeException("发送者不存在");
@@ -205,7 +206,7 @@ public class MessageServiceImpl implements MessageService {
                 dto.setSenderName(message.getSender().getUsername());
                 dto.setSenderAvatar(message.getSender().getAvatar());
             } else {
-                User sender = userRepository.findById(message.getSenderId());
+                UserDTO sender = userService.getUserDTOById(message.getSenderId());
                 if (sender != null) {
                     dto.setSenderName(sender.getUsername());
                     dto.setSenderAvatar(sender.getAvatar());
@@ -217,7 +218,7 @@ public class MessageServiceImpl implements MessageService {
                 dto.setReceiverName(message.getReceiver().getUsername());
                 dto.setReceiverAvatar(message.getReceiver().getAvatar());
             } else {
-                User receiver = userRepository.findById(message.getReceiverId());
+                UserDTO receiver = userService.getUserDTOById(message.getReceiverId());
                 if (receiver != null) {
                     dto.setReceiverName(receiver.getUsername());
                     dto.setReceiverAvatar(receiver.getAvatar());

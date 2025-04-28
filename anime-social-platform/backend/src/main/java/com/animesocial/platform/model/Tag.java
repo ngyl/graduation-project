@@ -23,7 +23,7 @@ public class Tag {
     private String category;
     
     /**
-     * 标签类型(post/resource/user)
+     * 标签类型(post/resource)
      */
     private String type;
 } 

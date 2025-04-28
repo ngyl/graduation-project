@@ -1,6 +1,6 @@
 package com.animesocial.platform.repository;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 import org.apache.ibatis.annotations.*;
@@ -46,7 +46,7 @@ public interface EventRepository {
         "ORDER BY start_time ASC",
         "</script>"
     })
-    List<Event> findAllByFilter(@Param("status") Integer status, @Param("startTime") LocalDateTime startTime, @Param("endTime") LocalDateTime endTime);
+    List<Event> findAllByFilter(@Param("status") Integer status, @Param("startTime") LocalDate startTime, @Param("endTime") LocalDate endTime);
     
     /**
      * 查询当前进行中的活动
@@ -54,7 +54,7 @@ public interface EventRepository {
      * @return 活动列表，按开始时间升序排序
      */
     @Select("SELECT * FROM events WHERE status = 1 AND start_time <= #{now} AND end_time >= #{now} ORDER BY start_time ASC")
-    List<Event> findCurrentEvents(LocalDateTime now);
+    List<Event> findCurrentEvents(LocalDate now);
     
     /**
      * 查询即将开始的活动
@@ -63,7 +63,7 @@ public interface EventRepository {
      * @return 活动列表，按开始时间升序排序
      */
     @Select("SELECT * FROM events WHERE status = 1 AND start_time > #{now} AND start_time <= #{future} ORDER BY start_time ASC")
-    List<Event> findUpcomingEvents(LocalDateTime now, LocalDateTime future);
+    List<Event> findUpcomingEvents(LocalDate now, LocalDate future);
     
     /**
      * 插入活动
@@ -106,4 +106,42 @@ public interface EventRepository {
      */
     @Select("SELECT COUNT(*) FROM events")
     int count();
+    
+    /**
+     * 根据状态统计活动数量
+     * @param status 活动状态(可选)
+     * @return 活动数量
+     */
+    @Select({
+        "<script>",
+        "SELECT COUNT(*) FROM events",
+        "<where>",
+        "  <if test='status != null'>",
+        "    status = #{status}",
+        "  </if>",
+        "</where>",
+        "</script>"
+    })
+    int countByStatus(@Param("status") Integer status);
+    
+    /**
+     * 根据ID列表批量查询活动
+     * @param ids 活动ID列表
+     * @return 活动列表，按开始时间升序排序
+     */
+    @Select({
+        "<script>",
+        "SELECT * FROM events",
+        "<where>",
+        "  <if test='ids != null and ids.size() > 0'>",
+        "    id IN ",
+        "    <foreach collection='ids' item='id' open='(' separator=',' close=')'>",
+        "      #{id}",
+        "    </foreach>",
+        "  </if>",
+        "</where>",
+        "ORDER BY start_time ASC",
+        "</script>"
+    })
+    List<Event> findAllByIds(@Param("ids") List<Integer> ids);
 } 

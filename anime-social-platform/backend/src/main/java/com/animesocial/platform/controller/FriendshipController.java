@@ -94,16 +94,12 @@ public class FriendshipController {
     @GetMapping("/following/{userId}")
     public ApiResponse<List<UserDTO>> getFollowings(
             @PathVariable Integer userId,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size) {
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
         
         List<UserDTO> followings;
         try {
-            if (page != null && size != null) {
-                followings = friendshipService.getFollowing(userId, page, size);
-            } else {
-                followings = friendshipService.getFollowing(userId);
-            }
+            followings = friendshipService.getFollowing(userId, page, size);
             return ApiResponse.success(followings);
         } catch (Exception e) {
             return ApiResponse.failed(e.getMessage());
@@ -121,45 +117,13 @@ public class FriendshipController {
     @GetMapping("/followers/{userId}")
     public ApiResponse<List<UserDTO>> getFollowers(
             @PathVariable Integer userId,
-            @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer size) {
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
         
         List<UserDTO> followers;
         try {
-            if (page != null && size != null) {
-                followers = friendshipService.getFollowers(userId, page, size);
-            } else {
-                followers = friendshipService.getFollowers(userId);
-            }
+            followers = friendshipService.getFollowers(userId, page, size);
             return ApiResponse.success(followers);
-        } catch (Exception e) {
-            return ApiResponse.failed(e.getMessage());
-        }
-    }
-    
-    /**
-     * 获取互相关注的好友列表
-     * 
-     * @param session HTTP会话，用于获取当前登录用户
-     * @return 互相关注的用户列表
-     */
-    @GetMapping("/mutual")
-    public ApiResponse<List<UserDTO>> getMutualFriends(HttpSession session) {
-        Integer currentUserId = (Integer) session.getAttribute("userId");
-        if (currentUserId == null) {
-            return ApiResponse.unauthorized();
-        }
-        
-        try {
-            // 获取所有关注的用户
-            List<UserDTO> following = friendshipService.getFollowing(currentUserId);
-            
-            // 过滤出互相关注的用户
-            List<UserDTO> mutualFriends = following.stream()
-                    .filter(user -> friendshipService.isMutualFollow(currentUserId, user.getId()))
-                    .toList();
-            
-            return ApiResponse.success(mutualFriends);
         } catch (Exception e) {
             return ApiResponse.failed(e.getMessage());
         }

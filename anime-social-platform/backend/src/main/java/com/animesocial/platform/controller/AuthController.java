@@ -7,6 +7,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.animesocial.platform.model.User;
 import com.animesocial.platform.model.dto.ApiResponse;
@@ -19,6 +24,9 @@ import com.animesocial.platform.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 认证控制器
@@ -77,12 +85,28 @@ public class AuthController {
             session.setAttribute("username", user.getUsername());
             session.setAttribute("isAdmin", user.getIsAdmin());
             
+            // 设置Spring Security上下文
+            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+            if (user.getIsAdmin()) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            }
+            authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
+            
+            Authentication auth = new UsernamePasswordAuthenticationToken(
+                user.getUsername(), null, authorities);
+            SecurityContext securityContext = SecurityContextHolder.getContext();
+            securityContext.setAuthentication(auth);
+            session.setAttribute("SPRING_SECURITY_CONTEXT", securityContext);
+            
             // 转换为DTO
             UserDTO userDTO = new UserDTO();
             BeanUtils.copyProperties(user, userDTO);
             
             // 创建登录响应
             LoginResponse loginResponse = new LoginResponse(token, userDTO);
+            
+            // 输出会话ID，用于调试
+            System.out.println("登录成功，会话ID: " + session.getId());
             
             return ApiResponse.success("登录成功", loginResponse);
         } catch (Exception e) {
@@ -98,13 +122,17 @@ public class AuthController {
      */
     @GetMapping("/info")
     public ApiResponse<UserDTO> info(HttpSession session) {
+        // 输出会话ID，用于调试
+        System.out.println("获取用户信息，会话ID: " + session.getId());
+        
         Integer userId = (Integer) session.getAttribute("userId");
         if (userId == null) {
+            System.out.println("会话中没有userId属性");
             return ApiResponse.unauthorized();
         }
         
         try {
-            UserDTO userDTO = userService.getUserById(userId);
+            UserDTO userDTO = userService.getUserDTOById(userId);
             if (userDTO == null) {
                 return ApiResponse.unauthorized();
             }
@@ -144,6 +172,7 @@ public class AuthController {
     public ApiResponse<Void> logout(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         if (session != null) {
+            SecurityContextHolder.clearContext();
             session.invalidate();
         }
         return ApiResponse.success("登出成功", null);

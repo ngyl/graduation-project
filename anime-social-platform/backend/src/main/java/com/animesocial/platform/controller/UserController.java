@@ -2,7 +2,7 @@ package com.animesocial.platform.controller;
 
 import com.animesocial.platform.model.Post;
 import com.animesocial.platform.model.Resource;
-import com.animesocial.platform.model.User;
+import com.animesocial.platform.model.dto.UserDTO;
 import com.animesocial.platform.model.dto.ApiResponse;
 import com.animesocial.platform.model.dto.UpdateUserInfoRequest;
 import com.animesocial.platform.model.dto.UserDetailResponse;
@@ -44,26 +44,53 @@ public class UserController {
     /**
      * 获取用户的帖子列表
      * @param id 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 帖子列表
      */
     @GetMapping("/{id}/posts")
-    public ApiResponse<List<Post>> getUserPosts(@PathVariable Integer id) {
+    public ApiResponse<List<Post>> getUserPosts(@PathVariable Integer id,
+                                               @RequestParam(defaultValue = "1") Integer page,
+                                               @RequestParam(defaultValue = "10") Integer size) {
         try {
-            return ApiResponse.success(userService.getUserPosts(id));
+            return ApiResponse.success(userService.getUserPosts(id, page, size));
         } catch (Exception e) {
             return ApiResponse.failed(e.getMessage());
         }
     }
 
     /**
+     * 获取用户的资源列表
+     * @param id 用户ID
+     * @param page 页码
+     * @param size 每页数量
+     * @return 资源列表 
+     */
+    @GetMapping("/{id}/resources")
+    public ApiResponse<List<Resource>> getUserResources(@PathVariable Integer id,
+                                                       @RequestParam(defaultValue = "1") Integer page,
+                                                       @RequestParam(defaultValue = "10") Integer size) {
+        try {
+            return ApiResponse.success(userService.getUserResources(id, page, size));
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
+    }
+    
+
+    /**
      * 获取用户的收藏列表
      * @param id 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 资源列表
      */
     @GetMapping("/{id}/favorites")
-    public ApiResponse<List<Resource>> getUserFavorites(@PathVariable Integer id) {
+    public ApiResponse<List<Resource>> getUserFavorites(@PathVariable Integer id,
+                                                       @RequestParam(defaultValue = "1") Integer page,
+                                                       @RequestParam(defaultValue = "10") Integer size) {
         try {
-            return ApiResponse.success(userService.getUserFavorites(id));
+            return ApiResponse.success(userService.getUserFavorites(id, page, size));
         } catch (Exception e) {
             return ApiResponse.failed(e.getMessage());
         }
@@ -72,12 +99,16 @@ public class UserController {
     /**
      * 获取用户的关注列表
      * @param id 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 用户列表
      */
     @GetMapping("/{id}/following")
-    public ApiResponse<List<User>> getUserFollowing(@PathVariable Integer id) {
+    public ApiResponse<List<UserDTO>> getUserFollowing(@PathVariable Integer id,
+                                                   @RequestParam(defaultValue = "1") Integer page,
+                                                   @RequestParam(defaultValue = "10") Integer size) {
         try {
-            return ApiResponse.success(userService.getUserFollowing(id));
+            return ApiResponse.success(userService.getUserFollowing(id, page, size));
         } catch (Exception e) {
             return ApiResponse.failed(e.getMessage());
         }
@@ -86,16 +117,39 @@ public class UserController {
     /**
      * 获取用户的粉丝列表
      * @param id 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 用户列表
      */
     @GetMapping("/{id}/followers")
-    public ApiResponse<List<User>> getUserFollowers(@PathVariable Integer id) {
+    public ApiResponse<List<UserDTO>> getUserFollowers(@PathVariable Integer id,
+                                                       @RequestParam(defaultValue = "1") Integer page,
+                                                       @RequestParam(defaultValue = "10") Integer size) {
         try {
-            return ApiResponse.success(userService.getUserFollowers(id));
+            return ApiResponse.success(userService.getUserFollowers(id, page, size));
         } catch (Exception e) {
             return ApiResponse.failed(e.getMessage());
         }
     }
+
+    /**
+     * 获取用户相互关注列表
+     * @param id 用户ID
+     * @param page 页码
+     * @param size 每页数量
+     * @return 用户列表
+     */
+    @GetMapping("/{id}/mutual")
+    public ApiResponse<List<UserDTO>> getMutualFriends(@PathVariable Integer id,
+                                                       @RequestParam(defaultValue = "1") Integer page,
+                                                       @RequestParam(defaultValue = "10") Integer size) {
+        try {
+            return ApiResponse.success(userService.getMutualFriends(id, page, size));
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
+    }
+
 
     /**
      * 更新用户信息
@@ -105,7 +159,7 @@ public class UserController {
      * @return 更新后的用户对象
      */
     @PutMapping("/{id}")
-    public ApiResponse<User> updateUserInfo(@PathVariable Integer id, 
+    public ApiResponse<UserDTO> updateUserInfo(@PathVariable Integer id, 
                              @RequestBody UpdateUserInfoRequest request,
                              HttpSession session) {
         // 检查用户是否登录
@@ -146,7 +200,7 @@ public class UserController {
         }
         
         try {
-            String result = userService.followUser(currentUserId, id);
+            String result = userService.toggleFollow(currentUserId, id);
             return ApiResponse.success(result);
         } catch (Exception e) {
             return ApiResponse.failed(e.getMessage());

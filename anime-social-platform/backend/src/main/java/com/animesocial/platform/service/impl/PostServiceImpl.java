@@ -1,19 +1,10 @@
 package com.animesocial.platform.service.impl;
 
-import com.animesocial.platform.exception.BusinessException;
-import com.animesocial.platform.model.Post;
-import com.animesocial.platform.model.User;
-import com.animesocial.platform.model.dto.PostDTO;
-import com.animesocial.platform.model.dto.CreatePostRequest;
-import com.animesocial.platform.model.dto.PostListResponse;
-import com.animesocial.platform.model.dto.TagDTO;
-import com.animesocial.platform.model.dto.UserDTO;
-import com.animesocial.platform.repository.PostRepository;
-import com.animesocial.platform.repository.UserRepository;
-import com.animesocial.platform.repository.TagRepository;
-import com.animesocial.platform.repository.PostLikeRepository;
-import com.animesocial.platform.service.PostService;
-import com.animesocial.platform.service.TagService;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,13 +13,22 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import com.animesocial.platform.exception.BusinessException;
+import com.animesocial.platform.model.Post;
+import com.animesocial.platform.model.Tag;
+import com.animesocial.platform.model.dto.CreatePostRequest;
+import com.animesocial.platform.model.dto.PostDTO;
+import com.animesocial.platform.model.dto.PostListResponse;
+import com.animesocial.platform.model.dto.TagDTO;
+import com.animesocial.platform.model.dto.UserDTO;
+import com.animesocial.platform.repository.PostLikeRepository;
+import com.animesocial.platform.repository.PostRepository;
+import com.animesocial.platform.repository.TagRepository;
+import com.animesocial.platform.service.PostService;
+import com.animesocial.platform.service.TagService;
+import com.animesocial.platform.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
-
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * 帖子服务实现类
@@ -41,9 +41,6 @@ public class PostServiceImpl implements PostService {
     private PostRepository postRepository;
     
     @Autowired
-    private UserRepository userRepository;
-    
-    @Autowired
     private TagRepository tagRepository;
     
     @Autowired
@@ -51,6 +48,9 @@ public class PostServiceImpl implements PostService {
     
     @Autowired
     private TagService tagService;
+
+    @Autowired
+    private UserService userService;
 
     /**
      * 根据ID获取帖子
@@ -73,10 +73,11 @@ public class PostServiceImpl implements PostService {
      * @return 帖子列表
      */
     @Override
-    public List<PostDTO> getPostsByUserId(Integer userId) {
-        return postRepository.findByUserId(userId).stream()
+    public List<PostDTO> getPostsByUserId(Integer userId, Integer page, Integer size) {
+        int offset = (page - 1) * size;
+        return postRepository.findByUserId(userId, offset, size).stream()
             .map(this::convertToDTO)
-            .collect(Collectors.toList());
+            .toList();
     }
 
     /**
@@ -111,7 +112,7 @@ public class PostServiceImpl implements PostService {
         // 转换为DTO
         List<PostDTO> postDTOs = posts.stream()
             .map(post -> convertToDTO(post, currentUserId))
-            .collect(Collectors.toList());
+            .toList();
             
         return new PostListResponse(postDTOs, total);
     }
@@ -126,7 +127,7 @@ public class PostServiceImpl implements PostService {
     @Transactional
     public PostDTO createPost(Integer userId, CreatePostRequest request) {
         // 验证用户是否存在
-        User user = userRepository.findById(userId);
+        UserDTO user = userService.getUserDTOById(userId);
         if (user == null) {
             throw new BusinessException("用户不存在");
         }
@@ -148,7 +149,7 @@ public class PostServiceImpl implements PostService {
         if (request.getTagIds() != null && !request.getTagIds().isEmpty()) {
             // 验证标签是否合法
             for (Integer tagId : request.getTagIds()) {
-                TagDTO tag = tagService.getTagById(tagId);
+                Tag tag = tagRepository.findById(tagId);
                 if (!"post".equals(tag.getType())) {
                     throw new BusinessException("标签类型错误，不能用于帖子: " + tag.getName());
                 }
@@ -187,7 +188,7 @@ public class PostServiceImpl implements PostService {
             if (!request.getTagIds().isEmpty()) {
                 // 验证标签是否合法
                 for (Integer tagId : request.getTagIds()) {
-                    TagDTO tag = tagService.getTagById(tagId);
+                    Tag tag = tagRepository.findById(tagId);
                     if (!"post".equals(tag.getType())) {
                         throw new BusinessException("标签类型错误，不能用于帖子: " + tag.getName());
                     }
@@ -311,7 +312,7 @@ public class PostServiceImpl implements PostService {
         // 转换为DTO
         List<PostDTO> postDTOs = posts.stream()
             .map(post -> convertToDTO(post, userId))
-            .collect(Collectors.toList());
+            .toList();
             
         return new PostListResponse(postDTOs, total);
     }
@@ -356,19 +357,12 @@ public class PostServiceImpl implements PostService {
         BeanUtils.copyProperties(post, dto);
         
         // 设置用户信息
-        User user = userRepository.findById(post.getUserId());
-        if (user == null) {
+        UserDTO userDTO = userService.getUserDTOById(post.getUserId());
+        if (userDTO == null) {
             throw new BusinessException("用户不存在");
         }
-        
-        UserDTO userDTO = new UserDTO();
-        BeanUtils.copyProperties(user, userDTO);
-        
-        // 隐藏敏感信息
-        // 注意：不直接调用setPassword方法，而是将敏感字段设置为null
-        BeanUtils.copyProperties(new UserDTO(), userDTO, "id", "username", "avatar", "bio", "isAdmin", "status", "registerTime", "lastLoginTime", "postCount", "followingCount", "followerCount", "favoriteCount", "tags", "recentPosts", "isFollowing");
-        
-        dto.setUser(userDTO);
+       
+        dto.setUserDTO(userDTO);
             
         // 设置标签信息
         List<TagDTO> tags = tagService.getPostTags(post.getId());
@@ -394,10 +388,7 @@ public class PostServiceImpl implements PostService {
             HttpServletRequest request = attributes.getRequest();
             HttpSession session = request.getSession(false);
             if (session != null) {
-                User user = (User) session.getAttribute("user");
-                if (user != null) {
-                    return user.getId();
-                }
+                return (Integer) session.getAttribute("userId");
             }
         }
         return null;
@@ -430,8 +421,70 @@ public class PostServiceImpl implements PostService {
     @Override
     public List<PostDTO> getTopPosts() {
         List<Post> posts = postRepository.findTopPosts();
+        Integer currentUserId = getCurrentUserId();
         return posts.stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .map(post -> convertToDTO(post, currentUserId))
+                .toList();
+    }
+
+    /**
+     * 搜索帖子
+     * @param keyword 搜索关键词
+     * @param page 页码
+     * @param size 每页大小
+     * @return 匹配的帖子列表和总数
+     */
+    @Override
+    public PostListResponse searchPosts(String keyword, Integer page, Integer size) {
+        // 计算偏移量
+        int offset = (page - 1) * size;
+        
+        // 调用Repository层查询
+        List<Post> posts = postRepository.searchPosts(keyword, offset, size);
+        int total = postRepository.countSearchPosts(keyword);
+        
+        // 获取当前用户ID，用于检查是否点赞
+        Integer currentUserId = getCurrentUserId();
+        
+        // 转换为DTO
+        List<PostDTO> postDTOs = posts.stream()
+            .map(post -> convertToDTO(post, currentUserId))
+            .collect(Collectors.toList());
+        
+        return new PostListResponse(postDTOs, total);
+    }
+
+    /**
+     * 获取帖子总数
+     * @return 帖子总数
+     */
+    @Override
+    public int countPosts() {
+        return postRepository.count();
+    }
+    
+    /**
+     * 根据ID列表批量查询帖子
+     * @param ids 帖子ID列表
+     * @return 帖子列表
+     */
+    @Override
+    public List<PostDTO> findByIds(List<Integer> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        // 获取当前用户ID，用于检查是否点赞
+        Integer currentUserId = getCurrentUserId();
+        
+        List<PostDTO> result = new ArrayList<>();
+        for (Integer id : ids) {
+            Post post = postRepository.findById(id);
+            if (post != null) {
+                result.add(convertToDTO(post, currentUserId));
+            }
+        }
+        
+        return result;
     }
 } 

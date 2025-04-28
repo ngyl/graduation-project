@@ -1,9 +1,7 @@
 package com.animesocial.platform.service;
 
-import com.animesocial.platform.model.Resource;
-import com.animesocial.platform.model.dto.ResourceDTO;
-
-import java.util.List;
+import com.animesocial.platform.model.Favorite;
+import com.animesocial.platform.model.dto.ResourceListResponse;
 
 /**
  * 收藏服务接口
@@ -16,53 +14,59 @@ public interface FavoriteService {
      * 
      * @param userId 用户ID
      * @param resourceId 资源ID
-     * @return 操作结果描述
-     * @throws RuntimeException 如果用户或资源不存在，或已收藏
+     * @return 收藏对象
      */
-    String addFavorite(Integer userId, Integer resourceId);
+    Favorite addFavorite(Integer userId, Integer resourceId);
     
     /**
      * 取消收藏
      * 
      * @param userId 用户ID
      * @param resourceId 资源ID
-     * @return 操作结果描述
-     * @throws RuntimeException 如果用户或资源不存在，或未收藏
+     * @return 是否成功
      */
-    String removeFavorite(Integer userId, Integer resourceId);
+    boolean removeFavorite(Integer userId, Integer resourceId);
     
     /**
-     * 检查用户是否已收藏资源
+     * 判断用户是否已收藏资源
      * 
      * @param userId 用户ID
      * @param resourceId 资源ID
-     * @return true表示已收藏，false表示未收藏
+     * @return 是否已收藏
      */
-    boolean isFavorite(Integer userId, Integer resourceId);
+    boolean isFavorited(Integer userId, Integer resourceId);
     
     /**
-     * 获取用户的收藏列表
+     * 获取用户收藏列表
      * 
      * @param userId 用户ID
-     * @return 资源列表
+     * @return 收藏DTO列表
      */
-    List<ResourceDTO> getUserFavorites(Integer userId);
+    ResourceListResponse getUserFavorites(Integer userId);
     
     /**
-     * 分页获取用户的收藏列表
+     * 分页获取用户收藏列表
      * 
      * @param userId 用户ID
      * @param page 页码
      * @param size 每页数量
-     * @return 资源列表
+     * @return 包含收藏列表和总数的Map
      */
-    List<ResourceDTO> getUserFavorites(Integer userId, Integer page, Integer size);
+    ResourceListResponse getUserFavoritesWithPagination(Integer userId, Integer page, Integer size);
     
     /**
-     * 获取用户的收藏数量
+     * 获取资源被收藏次数
+     * 
+     * @param resourceId 资源ID
+     * @return 收藏次数
+     */
+    int getResourceFavoriteCount(Integer resourceId);
+    
+    /**
+     * 获取用户收藏数量
      * 
      * @param userId 用户ID
      * @return 收藏数量
      */
-    int countUserFavorites(Integer userId);
+    int getUserFavoriteCount(Integer userId);
 } 

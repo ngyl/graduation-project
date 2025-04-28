@@ -43,12 +43,16 @@ public class PostController {
     /**
      * 获取指定用户的所有帖子
      * @param userId 用户ID
+     * @param page 页码
+     * @param size 每页数量
      * @return 帖子列表
      */
     @GetMapping("/user/{userId}")
-    public ApiResponse<List<PostDTO>> getUserPosts(@PathVariable Integer userId) {
+    public ApiResponse<List<PostDTO>> getUserPosts(@PathVariable Integer userId,
+                                                   @RequestParam(defaultValue = "1") Integer page,
+                                                   @RequestParam(defaultValue = "10") Integer size) {
         try {
-            return ApiResponse.success(postService.getPostsByUserId(userId));
+            return ApiResponse.success(postService.getPostsByUserId(userId, page, size));
         } catch (Exception e) {
             return ApiResponse.failed(e.getMessage());
         }
@@ -115,7 +119,7 @@ public class PostController {
             // 验证当前用户是否是帖子的作者或管理员
             PostDTO post = postService.getPostById(id);
             Boolean isAdmin = (Boolean) session.getAttribute("isAdmin");
-            if (!post.getUser().getId().equals(userId) && (isAdmin == null || !isAdmin)) {
+            if (!post.getUserDTO().getId().equals(userId) && (isAdmin == null || !isAdmin)) {
                 return ApiResponse.forbidden();
             }
             
@@ -143,7 +147,7 @@ public class PostController {
             // 验证当前用户是否是帖子的作者或管理员
             PostDTO post = postService.getPostById(id);
             Boolean isAdmin = (Boolean) session.getAttribute("isAdmin");
-            if (!post.getUser().getId().equals(userId) && (isAdmin == null || !isAdmin)) {
+            if (!post.getUserDTO().getId().equals(userId) && (isAdmin == null || !isAdmin)) {
                 return ApiResponse.forbidden();
             }
             

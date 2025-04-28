@@ -1,5 +1,6 @@
 package com.animesocial.platform.model.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import lombok.Data;
@@ -26,14 +27,14 @@ public class EventDTO {
     private String description;
     
     /**
-     * 活动开始时间
+     * 活动开始日期
      */
-    private LocalDateTime startTime;
+    private LocalDate startTime;
     
     /**
-     * 活动结束时间
+     * 活动结束日期
      */
-    private LocalDateTime endTime;
+    private LocalDate endTime;
     
     /**
      * 活动状态(0下线,1上线)

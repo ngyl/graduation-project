@@ -22,23 +22,28 @@ public interface ResourceRepository {
     Resource findById(Integer id);
     
     /**
-     * 根据用户ID查询上传的资源
+     * 根据用户ID分页查询上传的资源
      * @param userId 用户ID
+     * @param offset 偏移量
+     * @param limit 每页数量
      * @return 资源列表，按上传时间降序排序
      */
-    @Select("SELECT * FROM resources WHERE user_id = #{userId} ORDER BY upload_time DESC")
-    List<Resource> findByUserId(Integer userId);
+    @Select("SELECT * FROM resources WHERE user_id = #{userId} ORDER BY upload_time DESC LIMIT #{offset}, #{limit}")
+    List<Resource> findByUserId(Integer userId, int offset, int limit);
     
     /**
-     * 根据用户ID查询收藏的资源
+     * 根据用户ID分页查询收藏的资源
      * @param userId 用户ID
+     * @param offset 偏移量
+     * @param limit 每页数量
      * @return 资源列表，按收藏时间降序排序
      */
     @Select("SELECT r.* FROM resources r " +
             "JOIN favorites f ON r.id = f.resource_id " +
             "WHERE f.user_id = #{userId} " +
-            "ORDER BY f.created_at DESC")
-    List<Resource> findFavoritesByUserId(Integer userId);
+            "ORDER BY f.created_at DESC " +
+            "LIMIT #{offset}, #{limit}")
+    List<Resource> findFavoritesByUserId(Integer userId, int offset, int limit);
     
     /**
      * 分页查询所有资源
@@ -86,8 +91,8 @@ public interface ResourceRepository {
      * @param resource 资源对象
      * @return 插入成功返回1，失败返回0
      */
-    @Insert("INSERT INTO resources (user_id, title, description, file_url, file_type, file_size, upload_time, download_count, like_count) " +
-            "VALUES (#{userId}, #{title}, #{description}, #{fileUrl}, #{fileType}, #{fileSize}, #{uploadTime}, #{downloadCount}, #{likeCount})")
+    @Insert("INSERT INTO resources (user_id, title, description, file_url, cover_url, file_type, file_size, upload_time, download_count, like_count) " +
+            "VALUES (#{userId}, #{title}, #{description}, #{fileUrl}, #{coverUrl}, #{fileType}, #{fileSize}, #{uploadTime}, #{downloadCount}, #{likeCount})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(Resource resource);
     
@@ -96,7 +101,7 @@ public interface ResourceRepository {
      * @param resource 资源对象
      * @return 更新成功返回1，失败返回0
      */
-    @Update("UPDATE resources SET title = #{title}, description = #{description} WHERE id = #{id}")
+    @Update("UPDATE resources SET title = #{title}, description = #{description}, cover_url = #{coverUrl} WHERE id = #{id}")
     void update(Resource resource);
     
     /**
@@ -141,6 +146,14 @@ public interface ResourceRepository {
     @Select("SELECT * FROM resources WHERE title LIKE CONCAT('%', #{keyword}, '%') OR description LIKE CONCAT('%', #{keyword}, '%') " +
             "ORDER BY upload_time DESC LIMIT #{offset}, #{limit}")
     List<Resource> search(@Param("keyword") String keyword, @Param("offset") int offset, @Param("limit") int limit);
+    
+    /**
+     * 根据ID列表查询资源
+     * @param ids 资源ID列表
+     * @return 资源列表
+     */
+    @Select("<script>SELECT * FROM resources WHERE id IN <foreach item='id' collection='ids' open='(' separator=',' close=')'>#{id}</foreach></script>")
+    List<Resource> findByIds(@Param("ids") List<Integer> ids);
     
     /**
      * 统计搜索结果数量

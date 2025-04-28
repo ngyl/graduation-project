@@ -1,6 +1,6 @@
 package com.animesocial.platform.model.dto;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -29,11 +29,11 @@ public class CreateEventRequest {
      * 活动开始时间
      */
     @NotNull(message = "活动开始时间不能为空")
-    private LocalDateTime startTime;
+    private LocalDate startTime;
     
     /**
      * 活动结束时间
      */
     @NotNull(message = "活动结束时间不能为空")
-    private LocalDateTime endTime;
+    private LocalDate endTime;
 } 

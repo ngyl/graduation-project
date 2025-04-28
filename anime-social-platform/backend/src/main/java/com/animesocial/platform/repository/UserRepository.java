@@ -1,9 +1,15 @@
 package com.animesocial.platform.repository;
 
-import com.animesocial.platform.model.User;
-import org.apache.ibatis.annotations.*;
-
 import java.util.List;
+
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import com.animesocial.platform.model.User;
 
 /**
  * 用户数据访问接口
@@ -12,6 +18,30 @@ import java.util.List;
 @Mapper
 public interface UserRepository {
     
+    /**
+     * 检查用户是否存在（通过ID或用户名）
+     * @param id 用户ID
+     * @param username 用户名
+     * @return 如果用户存在返回true，否则返回false
+     */
+    @Select("SELECT COUNT(*) > 0 FROM users WHERE id = #{id} OR username = #{username}")
+    boolean existsByIdOrUsername(@Param("id") Integer id, @Param("username") String username);
+
+    /**
+     * 检查用户是否为管理员
+     * @param id 用户ID
+     * @return 如果用户为管理员返回true，否则返回false
+     */
+    @Select("SELECT is_admin FROM users WHERE id = #{id}")
+    boolean isAdmin(@Param("id") Integer id);
+
+    /**
+     * 根据ID查询用户名
+     * @param id 用户ID
+     * @return 用户名
+     */
+    @Select("SELECT username FROM users WHERE id = #{id}")
+    String findUsernameById(@Param("id") Integer id);
     /**
      * 根据ID查询用户
      * @param id 用户ID
@@ -63,26 +93,47 @@ public interface UserRepository {
     void updateStatus(@Param("id") Integer id, @Param("status") Integer status);
     
     /**
-     * 查询用户关注的用户列表(该用户的关注)
+     * 分页查询用户关注的用户列表(该用户的关注)
      * @param userId 用户ID
+     * @param offset 偏移量
+     * @param limit 每页数量
      * @return 用户列表，按关注时间降序排序
      */
     @Select("SELECT u.* FROM users u " +
             "JOIN friendships f ON u.id = f.friend_id " +
             "WHERE f.user_id = #{userId} " +
-            "ORDER BY f.created_at DESC")
-    List<User> findFollowingByUserId(Integer userId);
+            "ORDER BY f.created_at DESC " +
+            "LIMIT #{offset}, #{limit}")
+    List<User> findFollowingByUserId(Integer userId, Integer offset, Integer limit);
     
     /**
      * 查询关注该用户的用户列表(该用户的粉丝)
      * @param userId 用户ID
+     * @param offset 偏移量
+     * @param limit 每页数量
      * @return 用户列表，按关注时间降序排序
      */
     @Select("SELECT u.* FROM users u " +
             "JOIN friendships f ON u.id = f.user_id " +
             "WHERE f.friend_id = #{userId} " +
-            "ORDER BY f.created_at DESC")
-    List<User> findFollowersByUserId(Integer userId);
+            "ORDER BY f.created_at DESC " +
+            "LIMIT #{offset}, #{limit}")
+    List<User> findFollowersByUserId(Integer userId, Integer offset, Integer limit);
+
+    /**
+     * 分页查询该用户的相互关注用户列表 
+     * @param userId 用户ID
+     * @param offset 偏移量
+     * @param limit 每页数量
+     * @return 用户列表，按关注时间降序排序
+     */
+    @Select("SELECT u.* FROM users u " +
+            "JOIN friendships f ON u.id = f.friend_id " +
+            "WHERE f.user_id = #{userId} " +
+            "AND f.status = 1 " +
+            "ORDER BY f.created_at DESC " +
+            "LIMIT #{offset}, #{limit}")
+    List<User> findMutualFriendsByUserId(Integer userId, Integer offset, Integer limit);
     
     /**
      * 查询所有管理员用户

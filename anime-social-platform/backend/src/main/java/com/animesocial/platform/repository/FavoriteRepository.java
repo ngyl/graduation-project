@@ -1,6 +1,10 @@
 package com.animesocial.platform.repository;
 
-import org.apache.ibatis.annotations.*;
+import com.animesocial.platform.model.Favorite;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * 收藏数据访问接口
@@ -10,57 +14,83 @@ import org.apache.ibatis.annotations.*;
 public interface FavoriteRepository {
     
     /**
-     * 检查是否存在收藏关系
+     * 添加收藏
+     * @param favorite 收藏对象
+     * @return 影响行数
+     */
+    int insert(Favorite favorite);
+    
+    /**
+     * 删除收藏
+     * @param id 收藏ID
+     * @return 影响行数
+     */
+    int deleteById(Integer id);
+    
+    /**
+     * 根据用户ID和资源ID删除收藏
      * @param userId 用户ID
      * @param resourceId 资源ID
-     * @return 存在返回true，不存在返回false
+     * @return 影响行数
      */
-    @Select("SELECT COUNT(*) > 0 FROM favorites WHERE user_id = #{userId} AND resource_id = #{resourceId}")
-    boolean exists(@Param("userId") Integer userId, @Param("resourceId") Integer resourceId);
+    int deleteByUserIdAndResourceId(@Param("userId") Integer userId, @Param("resourceId") Integer resourceId);
+    
+    /**
+     * 根据ID查询收藏
+     * @param id 收藏ID
+     * @return 收藏对象
+     */
+    Favorite findById(Integer id);
+    
+    /**
+     * 根据用户ID查询收藏列表
+     * @param userId 用户ID
+     * @return 收藏列表
+     */
+    List<Favorite> findByUserId(Integer userId);
+    
+    /**
+     * 根据资源ID查询收藏列表
+     * @param resourceId 资源ID
+     * @return 收藏列表
+     */
+    List<Favorite> findByResourceId(Integer resourceId);
+    
+    /**
+     * 查询用户是否已收藏资源
+     * @param userId 用户ID
+     * @param resourceId 资源ID
+     * @return 收藏对象，如果不存在则返回null
+     */
+    Favorite findByUserIdAndResourceId(@Param("userId") Integer userId, @Param("resourceId") Integer resourceId);
+    
+    /**
+     * 查询用户的收藏的资源id
+     * @param userId 用户ID
+     * @return 收藏详情列表
+     */
+    List<Integer> findResourceIdsByUserId(Integer userId);
+    
+    /**
+     * 分页查询用户收藏的资源id
+     * @param userId 用户ID
+     * @param offset 偏移量
+     * @param size 每页数量
+     * @return 资源ID列表
+     */
+    List<Integer> findResourceIdsByUserIdWithPagination(@Param("userId") Integer userId, @Param("offset") Integer offset, @Param("size") Integer size);
     
     /**
      * 统计用户收藏数量
      * @param userId 用户ID
      * @return 收藏数量
      */
-    @Select("SELECT COUNT(*) FROM favorites WHERE user_id = #{userId}")
     int countByUserId(Integer userId);
     
     /**
-     * 统计资源被收藏次数
+     * 根据资源ID删除所有收藏记录
      * @param resourceId 资源ID
-     * @return 收藏次数
+     * @return 删除的记录数
      */
-    @Select("SELECT COUNT(*) FROM favorites WHERE resource_id = #{resourceId}")
-    int countByResourceId(Integer resourceId);
-    
-    /**
-     * 保存收藏关系
-     * @param userId 用户ID
-     * @param resourceId 资源ID
-     */
-    @Insert("INSERT INTO favorites (user_id, resource_id, created_at) VALUES (#{userId}, #{resourceId}, NOW())")
-    void insert(@Param("userId") Integer userId, @Param("resourceId") Integer resourceId);
-    
-    /**
-     * 删除收藏关系
-     * @param userId 用户ID
-     * @param resourceId 资源ID
-     */
-    @Delete("DELETE FROM favorites WHERE user_id = #{userId} AND resource_id = #{resourceId}")
-    void delete(@Param("userId") Integer userId, @Param("resourceId") Integer resourceId);
-    
-    /**
-     * 删除用户的所有收藏
-     * @param userId 用户ID
-     */
-    @Delete("DELETE FROM favorites WHERE user_id = #{userId}")
-    void deleteByUserId(Integer userId);
-    
-    /**
-     * 删除资源的所有收藏
-     * @param resourceId 资源ID
-     */
-    @Delete("DELETE FROM favorites WHERE resource_id = #{resourceId}")
-    void deleteByResourceId(Integer resourceId);
+    int deleteByResourceId(Integer resourceId);
 } 

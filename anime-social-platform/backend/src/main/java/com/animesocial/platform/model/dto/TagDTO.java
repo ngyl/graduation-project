@@ -1,13 +1,13 @@
 package com.animesocial.platform.model.dto;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 /**
  * 标签数据传输对象
  * 用于向前端传输标签信息
  */
 @Data
+@AllArgsConstructor
 @NoArgsConstructor
 public class TagDTO {
     /**
@@ -26,15 +26,10 @@ public class TagDTO {
     private String category;
     
     /**
-     * 标签类型(post/resource/user)
+     * 标签类型(post/resource)
      */
     private String type;
-    
-    /**
-     * 使用该标签的用户数量
-     */
-    private Integer userCount;
-    
+        
     /**
      * 使用该标签的内容数量
      */

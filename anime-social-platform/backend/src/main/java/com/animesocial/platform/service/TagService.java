@@ -2,8 +2,6 @@ package com.animesocial.platform.service;
 
 import com.animesocial.platform.model.Tag;
 import com.animesocial.platform.model.dto.TagDTO;
-import com.animesocial.platform.model.dto.UserTagsDTO;
-import com.animesocial.platform.model.dto.UpdateUserTagsRequest;
 
 import java.util.List;
 
@@ -67,45 +65,6 @@ public interface TagService {
     void deleteTag(Integer id);
     
     /**
-     * 获取用户标签
-     * @param userId 用户ID
-     * @return 用户标签信息
-     */
-    UserTagsDTO getUserTags(Integer userId);
-    
-    /**
-     * 更新用户标签
-     * @param userId 用户ID
-     * @param request 更新请求
-     * @return 更新后的用户标签信息
-     */
-    UserTagsDTO updateUserTags(Integer userId, UpdateUserTagsRequest request);
-    
-    /**
-     * 添加用户标签
-     * @param userId 用户ID
-     * @param tagId 标签ID
-     * @return 操作结果描述
-     */
-    String addUserTag(Integer userId, Integer tagId);
-    
-    /**
-     * 删除用户标签
-     * @param userId 用户ID
-     * @param tagId 标签ID
-     * @return 操作结果描述
-     */
-    String removeUserTag(Integer userId, Integer tagId);
-    
-    /**
-     * 检查用户是否已有标签
-     * @param userId 用户ID
-     * @param tagId 标签ID
-     * @return 已有返回true，否则返回false
-     */
-    boolean hasUserTag(Integer userId, Integer tagId);
-    
-    /**
      * 获取帖子标签
      * @param postId 帖子ID
      * @return 标签列表
@@ -134,13 +93,6 @@ public interface TagService {
     void updateResourceTags(Integer resourceId, List<Integer> tagIds);
     
     /**
-     * 获取热门用户标签
-     * @param limit 限制数量
-     * @return 热门标签列表
-     */
-    List<TagDTO> getHotUserTags(Integer limit);
-    
-    /**
      * 获取热门帖子标签
      * @param limit 限制数量
      * @return 热门标签列表
@@ -163,6 +115,20 @@ public interface TagService {
     List<TagDTO> getRecommendedTags(Integer userId, Integer limit);
     
     /**
+     * 根据标签ID查询与之关联的帖子ID列表
+     * @param tagId 标签ID
+     * @return 帖子ID列表
+     */
+    List<Integer> findPostIdsByTagId(Integer tagId);
+    
+    /**
+     * 根据标签ID查询与之关联的资源ID列表
+     * @param tagId 标签ID
+     * @return 资源ID列表
+     */
+    List<Integer> findResourceIdsByTagId(Integer tagId);
+    
+    /**
      * 将Tag实体转换为TagDTO
      * @param tag Tag实体
      * @return TagDTO对象
@@ -175,4 +141,11 @@ public interface TagService {
      * @return Tag实体
      */
     Tag convertToEntity(TagDTO tagDTO);
+    
+    /**
+     * 获取标签总数
+     * @param type 标签类型(可选，post/resource/user，null表示所有)
+     * @return 标签总数
+     */
+    int countTags(String type);
 } 

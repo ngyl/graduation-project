@@ -26,10 +26,3 @@ export interface LoginResponse {
     user: UserInfo;
 }
 
-// API响应
-export interface ApiResponse<T> {
-    code: number;
-    message: string;
-    data: T;
-    timestamp: number;
-} 

@@ -1,9 +1,16 @@
 package com.animesocial.platform.repository;
 
-import com.animesocial.platform.model.Post;
-import org.apache.ibatis.annotations.*;
-
 import java.util.List;
+
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+
+import com.animesocial.platform.model.Post;
 
 /**
  * 帖子数据访问接口
@@ -21,12 +28,14 @@ public interface PostRepository {
     Post findById(Integer id);
 
     /**
-     * 查询指定用户的所有帖子
+     * 分页查询指定用户的所有帖子
      * @param userId 用户ID
+     * @param offset 偏移量
+     * @param limit 每页数量
      * @return 帖子列表，按创建时间降序排序
      */
-    @Select("SELECT * FROM posts WHERE user_id = #{userId} ORDER BY created_at DESC")
-    List<Post> findByUserId(Integer userId);
+    @Select("SELECT * FROM posts WHERE user_id = #{userId} ORDER BY created_at DESC LIMIT #{offset}, #{limit}")
+    List<Post> findByUserId(Integer userId, Integer offset, Integer limit);
 
     /**
      * 统计用户的帖子数量
@@ -204,4 +213,23 @@ public interface PostRepository {
      */
     @Select("SELECT * FROM posts WHERE is_top = 1 ORDER BY created_at DESC")
     List<Post> findTopPosts();
+
+    /**
+     * 按关键词搜索帖子
+     * @param keyword 搜索关键词
+     * @param offset 偏移量
+     * @param limit 每页数量
+     * @return 匹配的帖子列表
+     */
+    @Select("SELECT * FROM posts WHERE title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%') " +
+            "ORDER BY created_at DESC LIMIT #{offset}, #{limit}")
+    List<Post> searchPosts(@Param("keyword") String keyword, @Param("offset") Integer offset, @Param("limit") Integer limit);
+
+    /**
+     * 统计搜索结果总数
+     * @param keyword 搜索关键词
+     * @return 匹配的帖子数量
+     */
+    @Select("SELECT COUNT(*) FROM posts WHERE title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%')")
+    int countSearchPosts(@Param("keyword") String keyword);
 } 

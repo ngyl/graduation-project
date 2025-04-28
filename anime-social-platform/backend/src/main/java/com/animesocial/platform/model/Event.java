@@ -1,5 +1,6 @@
 package com.animesocial.platform.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import lombok.Data;
@@ -33,12 +34,12 @@ public class Event {
     /**
      * 活动开始时间
      */
-    private LocalDateTime startTime;
+    private LocalDate startTime;
     
     /**
      * 活动结束时间
      */
-    private LocalDateTime endTime;
+    private LocalDate endTime;
     
     /**
      * 活动状态(0下线,1上线)

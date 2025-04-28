@@ -8,8 +8,6 @@ import org.springframework.web.bind.annotation.*;
 
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
-import java.util.Map;
-
 /**
  * 消息控制器
  * 处理与消息相关的HTTP请求，包括：

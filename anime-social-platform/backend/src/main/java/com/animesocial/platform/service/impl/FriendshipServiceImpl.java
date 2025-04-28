@@ -1,7 +1,6 @@
 package com.animesocial.platform.service.impl;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,11 +8,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.animesocial.platform.exception.BusinessException;
-import com.animesocial.platform.model.User;
 import com.animesocial.platform.model.dto.UserDTO;
 import com.animesocial.platform.repository.FriendshipRepository;
-import com.animesocial.platform.repository.UserRepository;
 import com.animesocial.platform.service.FriendshipService;
+import com.animesocial.platform.service.UserService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,10 +24,10 @@ import lombok.extern.slf4j.Slf4j;
 public class FriendshipServiceImpl implements FriendshipService {
 
     @Autowired
-    private UserRepository userRepository;
+    private FriendshipRepository friendshipRepository;
     
     @Autowired
-    private FriendshipRepository friendshipRepository;
+    private UserService userService;
     
     /**
      * 关注用户
@@ -46,20 +44,20 @@ public class FriendshipServiceImpl implements FriendshipService {
             throw new BusinessException("不能关注自己");
         }
         
-        User targetUser = userRepository.findById(targetId);
+        UserDTO targetUser = userService.getUserDTOById(targetId);
         if (targetUser == null) {
             throw new BusinessException("目标用户不存在");
         }
         
-        boolean isFollowing = friendshipRepository.existsByUserIdAndFriendId(userId, targetId);
+        boolean isFollowing = friendshipRepository.exists(userId, targetId);
         if (isFollowing) {
             throw new BusinessException("已经关注该用户");
         }
         
-        friendshipRepository.save(userId, targetId);
+        friendshipRepository.insert(userId, targetId);
         
         // 检查是否为互相关注
-        boolean isFollowedBy = friendshipRepository.existsByUserIdAndFriendId(targetId, userId);
+        boolean isFollowedBy = friendshipRepository.exists(targetId, userId);
         if (isFollowedBy) {
             // 更新双方的关注状态为互相关注
             friendshipRepository.updateStatus(userId, targetId, 1);
@@ -80,12 +78,12 @@ public class FriendshipServiceImpl implements FriendshipService {
     @Override
     @Transactional
     public String unfollow(Integer userId, Integer targetId) {
-        User targetUser = userRepository.findById(targetId);
+        UserDTO targetUser = userService.getUserDTOById(targetId);
         if (targetUser == null) {
             throw new BusinessException("目标用户不存在");
         }
         
-        boolean isFollowing = friendshipRepository.existsByUserIdAndFriendId(userId, targetId);
+        boolean isFollowing = friendshipRepository.exists(userId, targetId);
         if (!isFollowing) {
             throw new BusinessException("未关注该用户");
         }
@@ -98,7 +96,7 @@ public class FriendshipServiceImpl implements FriendshipService {
         }
         
         // 删除关注关系
-        friendshipRepository.deleteByUserIdAndFriendId(userId, targetId);
+        friendshipRepository.delete(userId, targetId);
         
         return "取消关注成功";
     }
@@ -107,45 +105,14 @@ public class FriendshipServiceImpl implements FriendshipService {
      * 获取用户的关注列表
      * 
      * @param userId 用户ID
-     * @return 关注的用户列表
-     */
-    @Override
-    public List<UserDTO> getFollowing(Integer userId) {
-        List<User> users = userRepository.findFollowingByUserId(userId);
-        
-        return users.stream()
-            .map(user -> {
-                UserDTO dto = new UserDTO();
-                BeanUtils.copyProperties(user, dto);
-                return dto;
-            })
-            .collect(Collectors.toList());
-    }
-    
-    /**
-     * 分页获取用户的关注列表
-     * 
-     * @param userId 用户ID
      * @param page 页码
      * @param size 每页数量
      * @return 关注的用户列表
      */
     @Override
     public List<UserDTO> getFollowing(Integer userId, Integer page, Integer size) {
-        // 当前实现不支持分页，返回全部关注的用户
-        // TODO: 实现分页功能
-        return getFollowing(userId);
-    }
-    
-    /**
-     * 获取用户的粉丝列表
-     * 
-     * @param userId 用户ID
-     * @return 粉丝用户列表
-     */
-    @Override
-    public List<UserDTO> getFollowers(Integer userId) {
-        List<User> users = userRepository.findFollowersByUserId(userId);
+        int offset = (page - 1) * size;
+        List<UserDTO> users = userService.getUserFollowing(userId, offset, size);
         
         return users.stream()
             .map(user -> {
@@ -153,7 +120,7 @@ public class FriendshipServiceImpl implements FriendshipService {
                 BeanUtils.copyProperties(user, dto);
                 return dto;
             })
-            .collect(Collectors.toList());
+            .toList();
     }
     
     /**
@@ -166,9 +133,16 @@ public class FriendshipServiceImpl implements FriendshipService {
      */
     @Override
     public List<UserDTO> getFollowers(Integer userId, Integer page, Integer size) {
-        // 当前实现不支持分页，返回全部粉丝
-        // TODO: 实现分页功能
-        return getFollowers(userId);
+        int offset = (page - 1) * size;
+        List<UserDTO> users = userService.getUserFollowers(userId, offset, size);
+        
+        return users.stream()
+            .map(user -> {
+                UserDTO dto = new UserDTO();
+                BeanUtils.copyProperties(user, dto);
+                return dto;
+            })
+            .toList();
     }
     
     /**
@@ -180,7 +154,7 @@ public class FriendshipServiceImpl implements FriendshipService {
      */
     @Override
     public boolean isFollowing(Integer userId, Integer targetId) {
-        return friendshipRepository.existsByUserIdAndFriendId(userId, targetId);
+        return friendshipRepository.exists(userId, targetId);
     }
     
     /**
@@ -203,7 +177,7 @@ public class FriendshipServiceImpl implements FriendshipService {
      */
     @Override
     public int countFollowing(Integer userId) {
-        return friendshipRepository.countByUserId(userId);
+        return friendshipRepository.countFollowing(userId);
     }
     
     /**
@@ -214,6 +188,6 @@ public class FriendshipServiceImpl implements FriendshipService {
      */
     @Override
     public int countFollowers(Integer userId) {
-        return friendshipRepository.countFollowersByUserId(userId);
+        return friendshipRepository.countFollowers(userId);
     }
 } 

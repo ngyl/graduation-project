@@ -3,14 +3,14 @@ package com.animesocial.platform.service.impl;
 import com.animesocial.platform.exception.BusinessException;
 import com.animesocial.platform.model.Comment;
 import com.animesocial.platform.model.Post;
-import com.animesocial.platform.model.User;
+import com.animesocial.platform.model.dto.UserDTO;
 import com.animesocial.platform.model.dto.CommentDTO;
 import com.animesocial.platform.model.dto.CreateCommentRequest;
 import com.animesocial.platform.repository.CommentRepository;
 import com.animesocial.platform.repository.PostRepository;
 import com.animesocial.platform.repository.UserRepository;
 import com.animesocial.platform.service.CommentService;
-
+import com.animesocial.platform.service.UserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,6 +38,9 @@ public class CommentServiceImpl implements CommentService {
     
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserService userService;
 
     /**
      * 根据ID获取评论
@@ -87,8 +90,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public List<CommentDTO> getCommentsByUserId(Integer userId) {
         // 验证用户是否存在
-        User user = userRepository.findById(userId);
-        if (user == null) {
+        if (!userRepository.existsByIdOrUsername(userId, null)) {
             throw new BusinessException("用户不存在");
         }
         
@@ -105,8 +107,7 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     public CommentDTO createComment(Integer userId, CreateCommentRequest request) {
         // 验证用户是否存在
-        User user = userRepository.findById(userId);
-        if (user == null) {
+        if (!userRepository.existsByIdOrUsername(userId, null)) {
             throw new BusinessException("用户不存在");
         }
         
@@ -226,7 +227,7 @@ public class CommentServiceImpl implements CommentService {
         BeanUtils.copyProperties(comment, dto);
         
         // 加载用户信息
-        User user = userRepository.findById(comment.getUserId());
+        UserDTO user = userService.getUserDTOById(comment.getUserId());
         if (user != null) {
             dto.setUsername(user.getUsername());
             dto.setUserAvatar(user.getAvatar());
