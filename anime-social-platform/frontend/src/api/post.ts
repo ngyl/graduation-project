@@ -11,6 +11,15 @@ export const getPosts = (params: GetPostsParams) => {
 };
 
 /**
+ * 获取热门帖子列表
+ * @param limit 获取数量，默认为12
+ */
+export const getHotPosts = (limit?: number) => {
+    return service.get<ApiResponse<PostListResponse>>('/posts/hot', { params: { limit } });
+};
+
+
+/**
  * 创建帖子
  * @param data 帖子数据
  */

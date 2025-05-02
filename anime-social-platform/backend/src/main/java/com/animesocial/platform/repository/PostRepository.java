@@ -232,4 +232,12 @@ public interface PostRepository {
      */
     @Select("SELECT COUNT(*) FROM posts WHERE title LIKE CONCAT('%', #{keyword}, '%') OR content LIKE CONCAT('%', #{keyword}, '%')")
     int countSearchPosts(@Param("keyword") String keyword);
+    
+    /**
+     * 获取热门帖子（按照点赞数除以浏览数的比例排序）
+     * @param limit 获取数量
+     * @return 热门帖子列表
+     */
+    @Select("SELECT * FROM posts WHERE view_count > 0 ORDER BY (like_count / view_count) DESC, like_count DESC LIMIT #{limit}")
+    List<Post> findHotPosts(@Param("limit") Integer limit);
 } 

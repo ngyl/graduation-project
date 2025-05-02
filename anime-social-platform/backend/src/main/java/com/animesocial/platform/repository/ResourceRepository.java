@@ -2,7 +2,13 @@ package com.animesocial.platform.repository;
 
 import java.util.List;
 
-import org.apache.ibatis.annotations.*;
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 import com.animesocial.platform.model.Resource;
 
@@ -162,4 +168,24 @@ public interface ResourceRepository {
      */
     @Select("SELECT COUNT(*) FROM resources WHERE title LIKE CONCAT('%', #{keyword}, '%') OR description LIKE CONCAT('%', #{keyword}, '%')")
     int countSearch(String keyword);
+    
+    /**
+     * 获取热门资源（按照点赞数除以下载数和收藏数除以下载数的总和排序）
+     * @param limit 获取数量
+     * @return 热门资源列表
+     */
+    @Select({
+        "<script>",
+        "SELECT r.*, ",
+        "COALESCE(r.like_count / NULLIF(r.download_count, 0), 0) AS like_ratio, ",
+        "(SELECT COUNT(*) FROM favorites f WHERE f.resource_id = r.id) AS favorite_count ",
+        "FROM resources r ",
+        "WHERE r.download_count > 0 ",
+        "ORDER BY (COALESCE(r.like_count / NULLIF(r.download_count, 0), 0) + ",
+        "COALESCE((SELECT COUNT(*) FROM favorites f WHERE f.resource_id = r.id) / NULLIF(r.download_count, 0), 0)) DESC, ",
+        "r.like_count DESC, r.download_count DESC ",
+        "LIMIT #{limit}",
+        "</script>"
+    })
+    List<Resource> findHotResources(@Param("limit") Integer limit);
 } 

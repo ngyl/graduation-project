@@ -1,10 +1,10 @@
 package com.animesocial.platform.service;
 
-import com.animesocial.platform.model.Tag;
-import com.animesocial.platform.model.UserTag;
-
 import java.util.List;
 import java.util.Map;
+
+import com.animesocial.platform.model.Tag;
+import com.animesocial.platform.model.UserTag;
 
 /**
  * 用户标签服务接口
@@ -29,6 +29,16 @@ public interface UserTagService {
      * @return 更新后的用户标签列表
      */
     List<Tag> updateUserTags(Integer userId, List<Integer> tagIds);
+    
+    /**
+     * 按标签类型批量更新用户标签
+     * 
+     * @param userId 用户ID
+     * @param tagIds 标签ID列表
+     * @param tagType 标签类型(post/resource/user)
+     * @return 更新后的用户标签列表
+     */
+    List<Tag> updateUserTagsByType(Integer userId, List<Integer> tagIds, String tagType);
     
     /**
      * 移除用户标签

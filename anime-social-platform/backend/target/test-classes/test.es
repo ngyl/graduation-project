@@ -44,4 +44,20 @@ GET /users/_search
                 {
                     "wildcard": {
                         "title": {
-                
+                            "value": "admin"
+                        }
+                    }
+                },
+                {
+                    "wildcard": {
+                        "content": {
+                            "value": "admin"
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "from": 0,
+    "size": 10
+}

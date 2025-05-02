@@ -769,4 +769,37 @@ public class ResourceServiceImpl implements ResourceService {
         // 如果路径中没有类型信息，尝试从文件名判断
         return getFileType(filePath);
     }
+    
+    /**
+     * 获取热门资源
+     * @param limit 获取数量，默认为12
+     * @return 热门资源列表
+     */
+    @Override
+    public ResourceListResponse getHotResources(Integer limit) {
+        if (limit == null || limit <= 0) {
+            limit = 12; // 默认获取12个热门资源
+        }
+        
+        List<Resource> hotResources = resourceRepository.findHotResources(limit);
+        
+        // 转换为DTO
+        List<ResourceDTO> dtoList = hotResources.stream()
+                .map(this::convertToDTO)
+                .toList();
+        
+        // 补充额外信息
+        for (ResourceDTO dto : dtoList) {
+            UserDTO user = userService.getUserDTOById(dto.getUserId());
+            if (user != null) {
+                dto.setUsername(user.getUsername());
+                dto.setUserAvatar(user.getAvatar());
+            }
+            
+            dto.setTags(tagService.getResourceTags(dto.getId()));
+            dto.setFavoriteCount(favoriteRepository.findByResourceId(dto.getId()).size());
+        }
+        
+        return new ResourceListResponse(dtoList, dtoList.size());
+    }
 } 

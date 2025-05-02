@@ -2,6 +2,7 @@ package com.animesocial.platform.repository.es;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 
@@ -19,7 +20,15 @@ public interface ResourceDocumentRepository extends ElasticsearchRepository<Reso
      * @param pageable 分页参数
      * @return 搜索结果
      */
-    Page<ResourceDocument> findByTitleOrDescription(String keyword, Pageable pageable);
+    @Query("""
+        {
+            "multi_match": {
+                "query": "?0",
+                "fields": ["title", "description"]
+            }
+        }
+        """)
+    Page<ResourceDocument> findByTitleOrDescriptionOrderByUploadTimeDesc(String keyword, Pageable pageable);
 
     /**
      * 根据标签搜索资源
@@ -27,7 +36,7 @@ public interface ResourceDocumentRepository extends ElasticsearchRepository<Reso
      * @param pageable 分页参数
      * @return 搜索结果
      */
-    Page<ResourceDocument> findByTagsContaining(String tag, Pageable pageable);
+    Page<ResourceDocument> findByTags(String tag, Pageable pageable);
 
     /**
      * 根据用户ID查找资源
@@ -43,5 +52,14 @@ public interface ResourceDocumentRepository extends ElasticsearchRepository<Reso
      * @param pageable 分页参数
      * @return 搜索结果
      */
+    @Query("""
+            {
+                "query": {
+                    "term": {
+                        "fileType": "?0"
+                    }
+                }
+            }
+        """)
     Page<ResourceDocument> findByFileType(String fileType, Pageable pageable);
 } 

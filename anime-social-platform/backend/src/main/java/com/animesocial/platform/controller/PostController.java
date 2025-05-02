@@ -231,4 +231,18 @@ public class PostController {
             return ApiResponse.failed(e.getMessage());
         }
     }
+    
+    /**
+     * 获取热门帖子
+     * @param limit 获取数量，默认为12
+     * @return 热门帖子列表
+     */
+    @GetMapping("/hot")
+    public ApiResponse<PostListResponse> getHotPosts(@RequestParam(required = false) Integer limit) {
+        try {
+            return ApiResponse.success(postService.getHotPosts(limit));
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
+    }
 } 

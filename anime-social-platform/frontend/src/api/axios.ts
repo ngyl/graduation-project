@@ -22,8 +22,14 @@ service.interceptors.request.use(
     config.withCredentials = true;
     
     // 添加调试信息
-    console.log(`正在发送${config.method?.toUpperCase()}请求到: ${config.url}`);
-    
+    console.debug(`正在发送${config.method?.toUpperCase()}请求到: ${config.url}`);
+    if (config.data) {
+      console.debug('请求数据:', JSON.stringify(config.data, null, 2));
+    }
+    if (config.params) {
+      console.debug('请求参数:', JSON.stringify(config.params, null, 2));
+    }
+
     return config;
   },
   (error) => {

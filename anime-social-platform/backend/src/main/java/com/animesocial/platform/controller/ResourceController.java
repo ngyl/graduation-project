@@ -330,4 +330,18 @@ public class ResourceController {
             return ResponseEntity.ok(ApiResponse.failed(e.getMessage()));
         }
     }
+    
+    /**
+     * 获取热门资源
+     * @param limit 获取数量，默认为12
+     * @return 热门资源列表
+     */
+    @GetMapping("/hot")
+    public ApiResponse<ResourceListResponse> getHotResources(@RequestParam(required = false) Integer limit) {
+        try {
+            return ApiResponse.success(resourceService.getHotResources(limit));
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
+    }
 } 

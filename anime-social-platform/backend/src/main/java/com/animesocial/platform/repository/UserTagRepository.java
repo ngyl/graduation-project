@@ -1,11 +1,18 @@
 package com.animesocial.platform.repository;
 
-import com.animesocial.platform.model.Tag;
-import com.animesocial.platform.model.UserTag;
-import org.apache.ibatis.annotations.*;
-
 import java.util.List;
 import java.util.Map;
+
+import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Result;
+import org.apache.ibatis.annotations.Results;
+import org.apache.ibatis.annotations.Select;
+
+import com.animesocial.platform.model.Tag;
+import com.animesocial.platform.model.UserTag;
 
 /**
  * 用户标签关联仓库
@@ -67,6 +74,16 @@ public interface UserTagRepository {
      */
     @Delete("DELETE FROM user_tags WHERE user_id = #{userId}")
     int deleteByUserId(@Param("userId") Integer userId);
+    
+    /**
+     * 删除用户特定类型的标签关联
+     * 
+     * @param userId 用户ID
+     * @param tagType 标签类型
+     * @return 删除的关联数量
+     */
+    @Delete("DELETE FROM user_tags WHERE user_id = #{userId} AND tag_id IN (SELECT id FROM tags WHERE type = #{tagType})")
+    int deleteByUserIdAndTagType(@Param("userId") Integer userId, @Param("tagType") String tagType);
     
     /**
      * 获取用户关联的所有标签

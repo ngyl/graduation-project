@@ -22,6 +22,14 @@ export const getResources = (page: number = 1, size: number = 10, tagId?: number
 };
 
 /**
+ * 获取热门资源列表
+ * @param limit 获取数量，默认为12
+ */
+export const getHotResources = (limit?: number) => {
+  return service.get<ApiResponse<ResourceListResponse>>('/resources/hot', { params: { limit } });
+};
+
+/**
  * 获取指定ID的资源详情
  * @param id 资源ID
  * @returns 资源详情

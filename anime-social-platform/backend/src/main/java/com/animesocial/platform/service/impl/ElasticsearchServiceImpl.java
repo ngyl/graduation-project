@@ -335,7 +335,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
     public Page<PostDocument> searchPosts(String keyword, Integer page, Integer size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         try {
-            return postDocumentRepository.findByTitleOrContent(keyword, pageRequest);
+            return postDocumentRepository.findByTitleOrContentOrderByCreateTimeDesc(keyword, pageRequest);
         } catch (Exception e) {
             log.error("搜索帖子失败", e);
             return Page.empty();
@@ -349,7 +349,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
     public Page<ResourceDocument> searchResources(String keyword, Integer page, Integer size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "uploadTime"));
         try {
-            return resourceDocumentRepository.findByTitleOrDescription(keyword, pageRequest);
+            return resourceDocumentRepository.findByTitleOrDescriptionOrderByUploadTimeDesc(keyword, pageRequest);
         } catch (Exception e) {
             log.error("搜索资源失败", e);
             return Page.empty();
@@ -363,7 +363,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
     public Page<UserDocument> searchUsers(String keyword, Integer page, Integer size) {
         PageRequest pageRequest = PageRequest.of(page - 1, size, Sort.by(Sort.Direction.DESC, "registerTime"));
         try {
-            return userDocumentRepository.findByUsernameOrBio(keyword, pageRequest);
+            return userDocumentRepository.findByUsernameOrBioOrderByCreateTimeDesc(keyword, pageRequest);
         } catch (Exception e) {
             log.error("搜索用户失败", e);
             return Page.empty();

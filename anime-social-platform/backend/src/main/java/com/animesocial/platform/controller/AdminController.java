@@ -5,7 +5,6 @@ import com.animesocial.platform.model.dto.CreateEventRequest;
 import com.animesocial.platform.model.dto.EventDTO;
 import com.animesocial.platform.model.dto.PostDTO;
 import com.animesocial.platform.model.dto.PostListResponse;
-import com.animesocial.platform.model.dto.ResourceDTO;
 import com.animesocial.platform.model.dto.UserDTO;
 import com.animesocial.platform.model.dto.ResourceListResponse;
 import com.animesocial.platform.model.dto.TagDTO;

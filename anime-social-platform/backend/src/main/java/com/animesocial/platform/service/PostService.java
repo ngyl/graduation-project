@@ -138,4 +138,11 @@ public interface PostService {
      * @return 帖子列表
      */
     List<PostDTO> findByIds(List<Integer> ids);
+    
+    /**
+     * 获取热门帖子
+     * @param limit 获取数量，默认为12
+     * @return 热门帖子列表
+     */
+    PostListResponse getHotPosts(Integer limit);
 } 

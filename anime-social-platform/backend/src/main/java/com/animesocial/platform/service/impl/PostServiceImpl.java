@@ -487,4 +487,28 @@ public class PostServiceImpl implements PostService {
         
         return result;
     }
+    
+    /**
+     * 获取热门帖子
+     * @param limit 获取数量，默认为12
+     * @return 热门帖子列表
+     */
+    @Override
+    public PostListResponse getHotPosts(Integer limit) {
+        if (limit == null || limit <= 0) {
+            limit = 12; // 默认获取12个热门帖子
+        }
+        
+        List<Post> hotPosts = postRepository.findHotPosts(limit);
+        
+        // 获取当前用户ID，用于检查是否点赞
+        Integer currentUserId = getCurrentUserId();
+        
+        // 转换为DTO
+        List<PostDTO> dtoList = hotPosts.stream()
+                .map(post -> convertToDTO(post, currentUserId))
+                .toList();
+        
+        return new PostListResponse(dtoList, dtoList.size());
+    }
 } 

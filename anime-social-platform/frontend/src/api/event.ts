@@ -1,6 +1,6 @@
 import service from './axios';
 import type { ApiResponse } from '@/types/api';
-import type { Event, CreateEventRequest, EventDTO } from '@/types/event';
+import type { Event, CreateEventRequest } from '@/types/event';
 
 /**
  * 获取当前进行中的活动

@@ -1,12 +1,25 @@
 package com.animesocial.platform.controller;
 
-import com.animesocial.platform.model.dto.TagDTO;
-import com.animesocial.platform.model.dto.ApiResponse;
-import com.animesocial.platform.service.TagService;
-import jakarta.servlet.http.HttpSession;
-import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.animesocial.platform.model.dto.ApiResponse;
+import com.animesocial.platform.model.dto.TagDTO;
+import com.animesocial.platform.model.Tag;
+import com.animesocial.platform.service.TagService;
+import com.animesocial.platform.service.UserTagService;
+
+import jakarta.servlet.http.HttpSession;
+import lombok.Data;
 
 /**
  * 标签控制器
@@ -18,7 +31,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/tags")
 public class TagController {
+    @Autowired
     private final TagService tagService;
+
+    @Autowired
+    private UserTagService userTagService;
     
     public TagController(TagService tagService) {
         this.tagService = tagService;
@@ -88,5 +105,46 @@ public class TagController {
         } catch (Exception e) {
             return ApiResponse.failed(e.getMessage());
         }
+    }
+
+    /**
+     * 更新用户标签
+     * @param userId 用户ID
+     * @param tagIds 标签ID列表
+     * @param session HTTP会话
+     * @return 操作结果
+     */
+    @PutMapping("/user/{userId}")
+    public ApiResponse<Void> updateUserTags(@PathVariable Integer userId, @RequestBody UpdateUserTagsRequest request, HttpSession session) {
+        // 检查用户权限
+        Integer user = (Integer) session.getAttribute("userId");
+        if (user == null) {
+            return ApiResponse.unauthorized();
+        }
+        
+        try {
+            // 分别更新不同类型的标签，而不是完全覆盖
+            // 为postTagIds创建一个单独的更新方法调用
+            if (request.getPostTagIds() != null) {
+                // 这里应该增加对标签类型的验证，确保只更新post类型的标签
+                userTagService.updateUserTagsByType(userId, request.getPostTagIds(), "post");
+            }
+            
+            // 为resourceTagIds创建一个单独的更新方法调用
+            if (request.getResourceTagIds() != null) {
+                // 这里应该增加对标签类型的验证，确保只更新resource类型的标签
+                userTagService.updateUserTagsByType(userId, request.getResourceTagIds(), "resource");
+            }
+            
+            return ApiResponse.success("用户标签更新成功", null);
+        } catch (Exception e) {
+            return ApiResponse.failed(e.getMessage());
+        }
+    }
+    
+    @Data
+    public static class UpdateUserTagsRequest {
+        private List<Integer> postTagIds;
+        private List<Integer> resourceTagIds;
     }
 } 

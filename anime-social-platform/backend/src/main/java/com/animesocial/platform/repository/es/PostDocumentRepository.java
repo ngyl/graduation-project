@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 
@@ -21,7 +22,15 @@ public interface PostDocumentRepository extends ElasticsearchRepository<PostDocu
      * @param pageable 分页参数
      * @return 搜索结果
      */
-    Page<PostDocument> findByTitleOrContent(String keyword, Pageable pageable);
+    @Query("""
+        {
+            "multi_match": {
+                "query": "?0",
+                "fields": ["title", "content"]
+            }
+        }
+        """)
+    Page<PostDocument> findByTitleOrContentOrderByCreateTimeDesc(String keyword, Pageable pageable);
 
     /**
      * 根据标签搜索帖子
@@ -29,7 +38,7 @@ public interface PostDocumentRepository extends ElasticsearchRepository<PostDocu
      * @param pageable 分页参数
      * @return 搜索结果
      */
-    Page<PostDocument> findByTagsContaining(String tag, Pageable pageable);
+    Page<PostDocument> findByTags(String tag, Pageable pageable);
 
     /**
      * 根据用户ID查找帖子
@@ -43,5 +52,14 @@ public interface PostDocumentRepository extends ElasticsearchRepository<PostDocu
      * 获取置顶帖子
      * @return 置顶帖子列表
      */
+    @Query("""
+        {
+            "query": {
+                "term": {
+                    "isTop": true
+                }
+            }
+        }
+        """)
     List<PostDocument> findByIsTopTrue();
 } 

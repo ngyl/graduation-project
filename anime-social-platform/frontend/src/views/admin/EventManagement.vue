@@ -135,8 +135,8 @@
               range-separator="至"
               start-placeholder="开始时间"
               end-placeholder="结束时间"
-              value-format="YYYY-MM-DD HH:mm:ss"
-              format="YYYY-MM-DD HH:mm:ss"
+              value-format="YYYY-MM-DD"
+              format="YYYY-MM-DD"
               :default-time="defaultTime"
               style="width: 100%;"
             />
@@ -175,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { ElMessage, FormInstance, FormRules } from 'element-plus';
 import * as adminApi from '@/api/admin';
 import { Plus } from '@element-plus/icons-vue';

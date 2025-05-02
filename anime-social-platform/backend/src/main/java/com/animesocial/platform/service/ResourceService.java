@@ -1,7 +1,6 @@
 package com.animesocial.platform.service;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.web.multipart.MultipartFile;
 
@@ -161,4 +160,11 @@ public interface ResourceService {
      * @return 创建的资源DTO
      */
     ResourceDTO createResource(Integer userId, String title, String description, String filePath, String coverPath, List<Integer> tagIds);
+    
+    /**
+     * 获取热门资源
+     * @param limit 获取数量，默认为12
+     * @return 热门资源列表
+     */
+    ResourceListResponse getHotResources(Integer limit);
 } 

@@ -12,15 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.animesocial.platform.model.Post;
-import com.animesocial.platform.model.Resource;
-import com.animesocial.platform.model.User;
 import com.animesocial.platform.model.dto.ApiResponse;
-import com.animesocial.platform.model.dto.PostDTO;
-import com.animesocial.platform.model.dto.ResourceDTO;
 import com.animesocial.platform.model.dto.SearchResult;
 import com.animesocial.platform.model.dto.SearchResultItem;
-import com.animesocial.platform.model.dto.UserDTO;
 import com.animesocial.platform.model.es.PostDocument;
 import com.animesocial.platform.model.es.ResourceDocument;
 import com.animesocial.platform.model.es.UserDocument;

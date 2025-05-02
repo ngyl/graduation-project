@@ -98,6 +98,52 @@ public class UserTagServiceImpl implements UserTagService {
 
     @Override
     @Transactional
+    public List<Tag> updateUserTagsByType(Integer userId, List<Integer> tagIds, String tagType) {
+        // 检查用户是否存在
+        if (!userRepository.existsByIdOrUsername(userId, null)) {
+            throw new BusinessException("用户不存在");
+        }
+        
+        // 验证标签类型
+        if (!tagType.matches("post|resource")) {
+            throw new BusinessException("无效的标签类型: " + tagType);
+        }
+        
+        // 如果标签ID列表为空，则移除该类型的所有标签
+        if (tagIds == null || tagIds.isEmpty()) {
+            // 删除特定类型的标签
+            userTagRepository.deleteByUserIdAndTagType(userId, tagType);
+            return new ArrayList<>();
+        }
+        
+        // 验证所有标签是否存在且类型匹配
+        List<Tag> validTags = new ArrayList<>();
+        for (Integer tagId : tagIds) {
+            Tag tag = tagRepository.findById(tagId);
+            if (tag != null && tagType.equals(tag.getType())) {
+                validTags.add(tag);
+            }
+        }
+        
+        // 获取有效的标签ID列表
+        List<Integer> validTagIds = validTags.stream()
+                .map(Tag::getId)
+                .toList();
+        
+        // 清除用户现有的特定类型标签
+        userTagRepository.deleteByUserIdAndTagType(userId, tagType);
+        
+        // 添加新的标签关联
+        if (!validTagIds.isEmpty()) {
+            userTagRepository.batchSave(userId, validTagIds);
+        }
+        
+        // 返回更新后的标签列表
+        return validTags;
+    }
+
+    @Override
+    @Transactional
     public boolean removeUserTag(Integer userId, Integer tagId) {
         // 检查用户是否存在
         if (!userRepository.existsByIdOrUsername(userId, null)) {
