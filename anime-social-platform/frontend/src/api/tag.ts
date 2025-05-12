@@ -58,3 +58,12 @@ export const updateTag = (id: number, tag: Omit<TagDTO, 'id'>) => {
 export const deleteTag = (id: number) => {
     return service.delete<ApiResponse<void>>(`/tags/${id}`);
 };
+
+/**
+ * 获取用户推荐标签
+ * @param userId 用户ID
+ * @param limit 限制数量
+ */
+export const getRecommendedTags = (userId: number, limit: number = 10) => {
+    return service.get<ApiResponse<TagDTO[]>>(`/recommend/tags/user/${userId}?limit=${limit}`);
+};

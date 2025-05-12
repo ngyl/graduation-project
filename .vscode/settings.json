@@ -1,14 +1,58 @@
 {
-    // 如果使用工具链，可添加
-    "java.configuration.runtimes": [
-      {
-        "name": "JavaSE-17",
-        "path": "C:\\Program Files\\Java\\jdk-17.0.2",
-        "default": true
-      }
-    ],
-    "java.jdt.ls.java.home": "C:\\Program Files\\Java\\jdk-17.0.2",
-    "java.jdt.ls.vmargs": "-javaagent:${env:USERPROFILE}\\.cursor\\extensions\\redhat.java-1.41.1-win32-x64\\lombok\\lombok-1.18.36.jar",
-    "java.compile.nullAnalysis.mode": "automatic"
-      
+  // 如果使用工具链，可添加
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-17",
+      "path": "C:\\Program Files\\Java\\jdk-17.0.2",
+      "default": true
+    }
+  ],
+  "java.jdt.ls.java.home": "C:\\Program Files\\Java\\jdk-17.0.2",
+  "java.jdt.ls.vmargs": "-javaagent:${env:USERPROFILE}\\.cursor\\extensions\\redhat.java-1.41.1-win32-x64\\lombok\\lombok-1.18.36.jar",
+  "java.compile.nullAnalysis.mode": "automatic",
+  "latex-workshop.latex.tools": [
+    {
+      "name": "xelatex",
+      "command": "xelatex",
+      "args": [
+        "-shell-escape",
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "%DOC%"
+      ]
+    },
+    {
+      "name": "biber",
+      "command": "biber",
+      "args": ["%DOCFILE%"]
+    },
+    {
+      "name": "xelatexmk",
+      "command": "latexmk",
+      "args": [
+        "-xelatex",
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-shell-escape",
+        "%DOC%"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "xelatex 编译",
+      "tools": ["xelatex"]
+    },
+    {
+      "name": "latexmk (xelatex)",
+      "tools": ["xelatexmk"]
+    },
+    {
+      "name": "xelatex -> biber -> xelatex x2",
+      "tools": ["xelatex", "biber", "xelatex", "xelatex"]
+    }
+  ],
+  "java.configuration.updateBuildConfiguration": "interactive"
 }

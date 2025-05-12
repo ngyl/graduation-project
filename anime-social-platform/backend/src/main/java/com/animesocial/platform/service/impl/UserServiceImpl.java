@@ -30,6 +30,7 @@ import com.animesocial.platform.repository.*;
 import com.animesocial.platform.service.TagService;
 import com.animesocial.platform.service.UserService;
 import com.animesocial.platform.service.UserTagService;
+import com.animesocial.platform.service.impl.UserTagServiceImpl;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -450,52 +451,52 @@ public class UserServiceImpl implements UserService {
                 .toList();
         
         if (userTagIds.isEmpty()) {
-            // 如果用户没有标签，返回随机用户
-            return userRepository.findRandomUsers(limit).stream()
-                    .map(this::convertToDTO)
-                    .toList();
+            // 如果用户没有标签，返回随机用户（排除已关注的用户）
+            List<User> randomUsers = userRepository.findRandomUsers(limit * 2); // 获取更多随机用户，以防过滤后数量不足
+            return filterFollowingUsers(userId, randomUsers, limit);
         }
         
-        // 查找与这些标签相关的其他用户
-        List<Integer> similarUserIds = new ArrayList<>();
-        for (Integer tagId : userTagIds) {
-            List<Integer> userIds = userTagService.getSimilarUsers(tagId, limit);
-            similarUserIds.addAll(userIds);
-        }
+        // 获取与当前用户相似的用户
+        UserTagServiceImpl userTagServiceImpl = (UserTagServiceImpl) userTagService;
+        List<Integer> similarUserIds = userTagServiceImpl.getSimilarUsers(userId, limit * 2); // 获取更多相似用户，以防过滤后数量不足
         
-        // 过滤掉当前用户
-        similarUserIds.removeIf(id -> id.equals(userId));
-        
-        // 如果没有找到相似用户，返回随机用户
+        // 如果没有找到相似用户，返回随机用户（排除已关注的用户）
         if (similarUserIds.isEmpty()) {
-            return userRepository.findRandomUsers(limit).stream()
-                    .map(this::convertToDTO)
-                    .toList();
+            List<User> randomUsers = userRepository.findRandomUsers(limit * 2);
+            return filterFollowingUsers(userId, randomUsers, limit);
         }
         
-        // 统计相同标签数量
-        Map<Integer, Integer> userTagCounts = new HashMap<>();
-        for (Integer similarUserId : similarUserIds) {
-            userTagCounts.put(similarUserId, userTagCounts.getOrDefault(similarUserId, 0) + 1);
-        }
-        
-        // 按标签匹配度排序
-        List<Integer> sortedUserIds = userTagCounts.entrySet().stream()
-                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
-                .limit(limit)
-                .map(Map.Entry::getKey)
-                .toList();
-        
-        // 获取用户详情
-        List<UserDTO> recommendedUsers = new ArrayList<>();
-        for (Integer recommendedUserId : sortedUserIds) {
-            UserDTO recommendedUser = convertToDTO(userRepository.findById(recommendedUserId));
+        // 获取用户详情，并排除已关注的用户
+        List<User> recommendedUsers = new ArrayList<>();
+        for (Integer recommendedUserId : similarUserIds) {
+            User recommendedUser = userRepository.findById(recommendedUserId);
             if (recommendedUser != null) {
                 recommendedUsers.add(recommendedUser);
             }
         }
         
-        return recommendedUsers;
+        return filterFollowingUsers(userId, recommendedUsers, limit);
+    }
+    
+    /**
+     * 过滤已关注的用户
+     * 
+     * @param userId 当前用户ID
+     * @param users 用户列表
+     * @param limit 限制数量
+     * @return 过滤后的用户DTO列表
+     */
+    private List<UserDTO> filterFollowingUsers(Integer userId, List<User> users, Integer limit) {
+        // 获取当前用户已关注的所有用户ID
+        List<Integer> followingIds = friendshipRepository.findFollowingIds(userId);
+        
+        // 过滤掉已关注的用户，并限制返回数量
+        return users.stream()
+                .filter(user -> !followingIds.contains(user.getId())) // 排除已关注的用户
+                .filter(user -> !user.getId().equals(userId)) // 排除自己
+                .limit(limit != null && limit > 0 ? limit : 10)
+                .map(this::convertToDTO)
+                .toList();
     }
     
     /**

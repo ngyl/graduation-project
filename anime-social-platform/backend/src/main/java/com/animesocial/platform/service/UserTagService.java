@@ -81,23 +81,4 @@ public interface UserTagService {
      * @return 热门标签列表及其使用数量
      */
     List<Map<String, Object>> getHotUserTags(Integer limit);
-    
-    /**
-     * 获取标签相似度用户推荐
-     * 
-     * @param userId 用户ID
-     * @param limit 数量限制
-     * @return 推荐的用户ID列表
-     */
-    List<Integer> getSimilarUsers(Integer userId, Integer limit);
-    
-    /**
-     * 根据用户标签推荐内容
-     * 
-     * @param userId 用户ID
-     * @param contentType 内容类型(post/resource)
-     * @param limit 数量限制
-     * @return 推荐的内容ID列表
-     */
-    List<Integer> getRecommendedContent(Integer userId, String contentType, Integer limit);
 } 

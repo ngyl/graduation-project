@@ -87,7 +87,7 @@ public class AuthController {
             
             // 设置Spring Security上下文
             List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-            if (user.getIsAdmin()) {
+            if (Boolean.TRUE.equals(user.getIsAdmin())) {
                 authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
             }
             authorities.add(new SimpleGrantedAuthority("ROLE_USER"));

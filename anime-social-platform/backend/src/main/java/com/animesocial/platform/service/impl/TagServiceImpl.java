@@ -3,7 +3,6 @@ package com.animesocial.platform.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -331,12 +330,12 @@ public class TagServiceImpl implements TagService {
         List<Integer> userTagIds = userTags.stream()
             .map(Tag::getId)
             .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+            .toList();
         
         List<Tag> recommendedTags = hotTags.stream()
             .filter(tag -> tag != null && tag.getId() != null && !userTagIds.contains(tag.getId()))
             .limit(actualLimit)
-            .collect(Collectors.toList());
+            .toList();
         
         return convertToDTOList(recommendedTags);
     }
@@ -420,7 +419,7 @@ public class TagServiceImpl implements TagService {
         return tags.stream()
             .filter(Objects::nonNull)
             .map(this::convertToDTO)
-            .collect(Collectors.toList());
+            .toList();
     }
     
     /**

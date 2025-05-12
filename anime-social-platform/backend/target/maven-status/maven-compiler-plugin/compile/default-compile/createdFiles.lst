@@ -10,7 +10,6 @@ com\animesocial\platform\model\dto\RegisterRequest.class
 com\animesocial\platform\model\UserTag.class
 com\animesocial\platform\model\dto\CreatePostRequest.class
 com\animesocial\platform\model\dto\MessageDTO.class
-com\animesocial\platform\controller\FriendshipController.class
 com\animesocial\platform\model\dto\UserDTO.class
 com\animesocial\platform\model\Resource.class
 com\animesocial\platform\controller\EventController.class
@@ -29,6 +28,7 @@ com\animesocial\platform\service\impl\PostServiceImpl.class
 com\animesocial\platform\model\dto\UserTagsDTO.class
 com\animesocial\platform\repository\UserTagRepository.class
 com\animesocial\platform\model\Favorite.class
+com\animesocial\platform\controller\RecommendController.class
 com\animesocial\platform\repository\EventRepository.class
 com\animesocial\platform\model\es\PostDocument$PostDocumentBuilder.class
 com\animesocial\platform\repository\FavoriteRepository.class
@@ -59,6 +59,7 @@ com\animesocial\platform\model\dto\UserDetailResponse.class
 com\animesocial\platform\exception\GlobalExceptionHandler.class
 com\animesocial\platform\service\impl\FavoriteServiceImpl.class
 com\animesocial\platform\config\WebConfig.class
+com\animesocial\platform\controller\TagController$UpdateUserTagsRequest.class
 com\animesocial\platform\service\impl\TagServiceImpl.class
 com\animesocial\platform\repository\PostRepository.class
 com\animesocial\platform\model\es\UserDocument.class

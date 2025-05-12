@@ -1,7 +1,5 @@
 import SockJS from 'sockjs-client';
-// 如果上面的导入方式不工作，可以尝试下面这种方式:
-// const SockJS = require('sockjs-client');
-import { Client, IFrame, IMessage } from '@stomp/stompjs';
+import { Client, IMessage } from '@stomp/stompjs';
 import { ElMessage } from 'element-plus';
 import { useUserStore } from '../stores/user';
 
@@ -21,9 +19,7 @@ export interface ChatMessage {
   timestamp?: number;
 }
 
-interface MessageCallback {
-  (message: ChatMessage): void;
-}
+type MessageCallback = (message: ChatMessage) => void;
 
 class WebSocketService {
   private client: Client | null = null;
@@ -31,7 +27,7 @@ class WebSocketService {
   private connected = false;
   private reconnectAttempts = 0;
   private reconnectTimeout: number | null = null;
-  private maxReconnectAttempts = 5;
+  private readonly maxReconnectAttempts = 5;
 
   // 初始化WebSocket连接
   connect() {
@@ -92,7 +88,7 @@ class WebSocketService {
   }
 
   // 连接成功回调
-  private onConnected(frame: IFrame) {
+  private onConnected() {
     this.connected = true;
     this.reconnectAttempts = 0;
     console.log('WebSocket连接成功');
@@ -210,13 +206,6 @@ class WebSocketService {
       this.messageCallbacks.splice(index, 1);
     }
   }
-
-  // 错误处理
-  private onError(frame: IFrame) {
-    console.error('WebSocket连接错误:', frame);
-    this.connected = false;
-    this.scheduleReconnect();
-  }
   
   // WebSocket连接关闭处理
   private onWebSocketClose() {
@@ -269,11 +258,10 @@ class WebSocketService {
   disconnect() {
     console.log('断开WebSocket连接');
     if (this.client) {
-      try {
-        this.client.deactivate();
-      } catch (error) {
-        console.error('断开WebSocket连接时出错:', error);
-      }
+      this.client.deactivate()
+        .catch(error => {
+          console.error('断开WebSocket连接时出错:', error);
+        });
       this.client = null;
     }
     this.connected = false;
@@ -287,7 +275,6 @@ class WebSocketService {
 
   // 检查是否已连接
   isConnected() {
-    // 增加更严格的检查 - 确保连接状态正确且client对象有效并处于激活状态
     return this.connected && 
            this.client !== null && 
            this.client.connected && 

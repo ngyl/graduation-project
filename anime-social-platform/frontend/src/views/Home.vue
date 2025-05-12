@@ -25,8 +25,8 @@
                         </div>
                     </div>
                     <div class="welcome-actions">
-                        <el-button type="primary" size="large" @click="$router.push('/register')">立即加入</el-button>
-                        <el-button size="large" @click="$router.push('/login')">已有账号？登录</el-button>
+                        <el-button type="primary" size="large" class="register-button" @click="$router.push('/register')">立即加入</el-button>
+                        <el-button size="large" class="login-button" @click="$router.push('/login')">已有账号？登录</el-button>
                     </div>
                 </div>
             </div>
@@ -177,7 +177,6 @@ import type { AnimeSubject } from '@/types/bangumi'
 import { ElMessage } from 'element-plus'
 
 const userStore = useUserStore()
-
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 
 // 数据和加载状态
@@ -264,10 +263,7 @@ const fetchHotAnime = async () => {
 
 // 显示动漫详情
 const showAnimeDetail = (id: number) => {
-    ElMessage.info('动漫详情功能开发中')
-    console.log('查看动漫详情:', id)
-    // 这里可以跳转到动漫详情页面
-    // router.push(`/anime/${id}`)
+    window.open(`https://bgm.tv/subject/${id}`, '_blank')
 }
 
 // 格式化时间
@@ -381,29 +377,29 @@ onMounted(() => {
 <style scoped>
 /* Welcome section */
 .welcome-section {
-    min-height: 60vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 0;
+    background: var(--bg-secondary);
+    padding: 50px 0;
+    text-align: center;
+    border-radius: var(--border-radius-lg);
+    margin-bottom: 30px;
 }
 
 .welcome-content {
-    text-align: center;
     max-width: 800px;
+    margin: 0 auto;
     padding: 0 20px;
 }
 
 .welcome-content h2 {
     font-size: 36px;
-    color: #333;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
+    color: var(--text-primary);
 }
 
-.welcome-content > p {
+.welcome-content p {
     font-size: 18px;
-    color: #666;
-    margin-bottom: 30px;
+    margin-bottom: 40px;
+    color: var(--text-secondary);
 }
 
 /* 搜索框样式 */
@@ -420,61 +416,84 @@ onMounted(() => {
 
 .feature-list {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 30px;
+    justify-content: space-around;
     margin-bottom: 40px;
+    gap: 20px;
 }
 
 .feature-item {
-    flex: 1;
-    min-width: 200px;
-    max-width: 250px;
-    text-align: center;
     padding: 20px;
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-    transition: transform 0.3s, box-shadow 0.3s;
+    width: 30%;
+    background-color: var(--bg-primary);
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-base);
 }
 
 .feature-item:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-lg);
 }
 
 .feature-item .el-icon {
-    font-size: 36px;
-    color: #409eff;
-    margin-bottom: 10px;
+    font-size: 32px;
+    color: var(--primary-color);
+    margin-bottom: 15px;
 }
 
 .feature-item h3 {
-    margin: 10px 0;
-    font-size: 18px;
-    color: #333;
+    font-size: 20px;
+    margin-bottom: 10px;
+    color: var(--text-primary);
 }
 
 .feature-item p {
-    color: #666;
     font-size: 14px;
+    color: var(--text-secondary);
 }
 
 .welcome-actions {
     display: flex;
-    gap: 20px;
     justify-content: center;
+    gap: 15px;
+}
+
+.register-button {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    transition: var(--transition-base);
+}
+
+.register-button:hover {
+    background-color: var(--primary-light);
+    border-color: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.login-button {
+    color: var(--text-primary);
+    border-color: var(--gray-300);
+    transition: var(--transition-base);
+}
+
+.login-button:hover {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
 }
 
 /* Banner */
 .banner {
-    margin: 0 -20px 20px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    border-radius: var(--border-radius-lg);
 }
 
 .carousel-item {
-    height: 400px;
-    overflow: hidden;
     position: relative;
+    height: 400px;
 }
 
 .carousel-item img {
@@ -488,20 +507,19 @@ onMounted(() => {
     bottom: 0;
     left: 0;
     width: 100%;
-    padding: 30px;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
-    color: #fff;
+    padding: 20px;
+    background: linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0));
+    color: var(--text-light);
 }
 
 .carousel-content h2 {
-    font-size: 28px;
-    margin-bottom: 10px;
+    font-size: 24px;
+    margin-bottom: 5px;
 }
 
 /* Content section */
 .content-section {
-    margin-top: 40px;
-    padding: 0 20px;
+    margin-bottom: 40px;
 }
 
 .section-title {
@@ -512,8 +530,8 @@ onMounted(() => {
 }
 
 .section-title h2 {
-    font-size: 24px;
-    color: #333;
+    font-size: 22px;
+    color: var(--text-primary);
     margin: 0;
 }
 
@@ -521,15 +539,18 @@ onMounted(() => {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: 20px;
+    margin-bottom: 20px;
 }
 
 .post-card {
-    transition: transform 0.3s;
+    transition: var(--transition-base);
     cursor: pointer;
+    height: 100%;
 }
 
 .post-card:hover {
     transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
 }
 
 .post-header {
@@ -541,77 +562,74 @@ onMounted(() => {
 .post-user {
     display: flex;
     align-items: center;
+    gap: 10px;
 }
 
-.post-user .username {
-    margin-left: 10px;
+.username {
+    color: var(--primary-color);
     font-weight: 500;
 }
 
 .post-time {
-    color: #999;
-    font-size: 12px;
+    color: var(--text-hint);
+    font-size: 14px;
 }
 
 .post-content h3 {
     margin-top: 0;
     font-size: 18px;
     margin-bottom: 10px;
+    color: var(--text-primary);
 }
 
 .post-content p {
-    color: #666;
-    margin-bottom: 15px;
-}
-
-.post-image {
-    margin-bottom: 15px;
-    border-radius: 4px;
+    color: var(--text-secondary);
     overflow: hidden;
-}
-
-.post-image img {
-    width: 100%;
-    display: block;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    line-height: 1.6;
+    margin-bottom: 20px;
 }
 
 .post-footer {
     display: flex;
     justify-content: space-between;
-    color: #999;
+    color: var(--text-hint);
     font-size: 14px;
 }
 
 .post-footer span {
     display: flex;
     align-items: center;
-}
-
-.post-footer .el-icon {
-    margin-right: 5px;
+    gap: 5px;
 }
 
 /* 资源卡片样式 */
 .resources-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
 }
 
 .resource-card {
-    transition: transform 0.3s;
+    transition: var(--transition-base);
     cursor: pointer;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .resource-card:hover {
     transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
 }
 
 .resource-image {
     position: relative;
     height: 160px;
     overflow: hidden;
-    border-radius: 4px 4px 0 0;
+    border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
 }
 
 .resource-image img {
@@ -624,10 +642,10 @@ onMounted(() => {
     position: absolute;
     top: 10px;
     right: 10px;
-    background-color: rgba(64, 158, 255, 0.9);
-    color: white;
+    background-color: var(--primary-color);
+    color: var(--text-light);
     padding: 2px 8px;
-    border-radius: 4px;
+    border-radius: var(--border-radius-sm);
     font-size: 12px;
 }
 
@@ -639,10 +657,11 @@ onMounted(() => {
     margin-top: 0;
     font-size: 16px;
     margin-bottom: 8px;
+    color: var(--text-primary);
 }
 
 .resource-content p {
-    color: #666;
+    color: var(--text-secondary);
     font-size: 14px;
     margin-bottom: 15px;
     line-height: 1.4;
@@ -651,7 +670,7 @@ onMounted(() => {
 .resource-meta {
     display: flex;
     justify-content: space-between;
-    color: #999;
+    color: var(--text-hint);
     font-size: 14px;
 }
 
@@ -677,13 +696,13 @@ onMounted(() => {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background-color: #f5f7fa;
+    background-color: var(--bg-secondary);
 }
 
 .file-type-label {
     margin-top: 10px;
     font-size: 14px;
-    color: #606266;
+    color: var(--text-secondary);
     text-transform: uppercase;
 }
 
@@ -728,7 +747,7 @@ onMounted(() => {
 }
 
 .anime-card {
-    transition: transform 0.3s;
+    transition: var(--transition-base);
     cursor: pointer;
     height: 100%;
     display: flex;
@@ -737,13 +756,14 @@ onMounted(() => {
 
 .anime-card:hover {
     transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
 }
 
 .anime-image {
     position: relative;
     height: 300px;
     overflow: hidden;
-    border-radius: 4px 4px 0 0;
+    border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
 }
 
 .anime-image img {
@@ -759,7 +779,7 @@ onMounted(() => {
     width: 100%;
     padding: 8px;
     background: rgba(0, 0, 0, 0.7);
-    color: white;
+    color: var(--text-light);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -784,23 +804,75 @@ onMounted(() => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    color: var(--text-primary);
 }
 
 .anime-info {
     display: flex;
     justify-content: space-between;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 12px;
     margin-bottom: 10px;
 }
 
 .anime-content p {
-    color: #666;
+    color: var(--text-secondary);
     font-size: 14px;
     line-height: 1.4;
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
+}
+
+/* 自定义Element Plus组件样式 */
+:deep(.el-pagination.is-background .el-pager li:not(.is-disabled).is-active) {
+  background-color: var(--primary-color);
+}
+
+:deep(.el-pagination.is-background .el-pager li:not(.is-disabled):hover) {
+  color: var(--primary-color);
+}
+
+:deep(.el-rate__icon) {
+  font-size: 16px;
+  margin-right: 2px;
+}
+
+:deep(.el-carousel__indicator:hover button) {
+  background-color: var(--primary-light);
+}
+
+:deep(.el-carousel__indicator.is-active button) {
+  background-color: var(--primary-color);
+}
+
+:deep(.el-tabs__item) {
+  color: var(--text-secondary);
+}
+
+:deep(.el-tabs__item.is-active) {
+  color: var(--primary-color);
+}
+
+:deep(.el-tabs__active-bar) {
+  background-color: var(--primary-color);
+}
+
+:deep(.el-button--primary) {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+:deep(.el-button--primary:hover),
+:deep(.el-button--primary:focus) {
+  background-color: var(--primary-light);
+  border-color: var(--primary-light);
+}
+
+:deep(.el-button--default:hover),
+:deep(.el-button--default:focus) {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 </style> 

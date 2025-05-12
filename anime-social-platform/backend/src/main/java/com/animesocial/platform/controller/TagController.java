@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.animesocial.platform.model.dto.ApiResponse;
 import com.animesocial.platform.model.dto.TagDTO;
-import com.animesocial.platform.model.Tag;
 import com.animesocial.platform.service.TagService;
 import com.animesocial.platform.service.UserTagService;
 

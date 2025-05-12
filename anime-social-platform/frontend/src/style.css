@@ -3,11 +3,13 @@
   --primary-color: #ff6b81; /* 樱花粉色 */
   --primary-light: #ff9eb5;
   --primary-dark: #d84d61;
+  --primary-color-rgb: 255, 107, 129;
   
   /* 次要色调 */
   --secondary-color: #7367f0; /* 梦幻紫色 */
   --secondary-light: #9387f5;
   --secondary-dark: #5649d0;
+  --secondary-color-rgb: 115, 103, 240;
   
   /* 灰度 */
   --gray-100: #f8f9fa;
@@ -25,6 +27,10 @@
   --warning-color: #ffbb44; /* 温暖黄 */
   --error-color: #ff6865; /* 活力红 */
   --info-color: #57c9ef; /* 天空蓝 */
+  --success-color-rgb: 109, 213, 176;
+  --warning-color-rgb: 255, 187, 68;
+  --error-color-rgb: 255, 104, 101;
+  --info-color-rgb: 87, 201, 239;
   
   /* 文字颜色 */
   --text-primary: var(--gray-900);
@@ -216,7 +222,7 @@ button:focus-visible {
   padding: var(--spacing-6);
   box-shadow: var(--shadow-md);
   transition: var(--transition-base);
-  border: 1px solid rgba(var(--primary-color-rgb, 255, 107, 129), 0.1);
+  border: 1px solid rgba(var(--primary-color-rgb), 0.1);
   overflow: hidden;
   position: relative;
 }
@@ -224,7 +230,7 @@ button:focus-visible {
 .card:hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
-  border-color: rgba(var(--primary-color-rgb, 255, 107, 129), 0.2);
+  border-color: rgba(var(--primary-color-rgb), 0.2);
 }
 
 /* 给卡片添加装饰性的角标 */
@@ -235,7 +241,7 @@ button:focus-visible {
   right: 0;
   width: 30px;
   height: 30px;
-  background: linear-gradient(135deg, transparent 50%, rgba(var(--primary-color-rgb, 255, 107, 129), 0.1) 50%);
+  background: linear-gradient(135deg, transparent 50%, rgba(var(--primary-color-rgb), 0.1) 50%);
   border-radius: 0 var(--border-radius-sm) 0 var(--border-radius-sm);
 }
 
@@ -248,13 +254,13 @@ button:focus-visible {
   padding: 0.5em 1.2em;
   font-weight: 500;
   transition: var(--transition-base);
-  box-shadow: 0 2px 5px rgba(var(--primary-color-rgb, 255, 107, 129), 0.3);
+  box-shadow: 0 2px 5px rgba(var(--primary-color-rgb), 0.3);
 }
 
 .btn-primary:hover {
   background-color: var(--primary-light);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(var(--primary-color-rgb, 255, 107, 129), 0.4);
+  box-shadow: 0 4px 8px rgba(var(--primary-color-rgb), 0.4);
 }
 
 .btn-secondary {
@@ -265,13 +271,13 @@ button:focus-visible {
   padding: 0.5em 1.2em;
   font-weight: 500;
   transition: var(--transition-base);
-  box-shadow: 0 2px 5px rgba(var(--secondary-color-rgb, 115, 103, 240), 0.3);
+  box-shadow: 0 2px 5px rgba(var(--secondary-color-rgb), 0.3);
 }
 
 .btn-secondary:hover {
   background-color: var(--secondary-light);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(var(--secondary-color-rgb, 115, 103, 240), 0.4);
+  box-shadow: 0 4px 8px rgba(var(--secondary-color-rgb), 0.4);
 }
 
 /* 添加一些动漫风格的动画效果 */
@@ -392,4 +398,143 @@ button:focus-visible {
 
 .gap-lg {
   gap: var(--spacing-6);
+}
+
+/* Element Plus 组件全局样式覆盖 */
+.el-button--primary {
+  --el-button-bg-color: var(--primary-color) !important;
+  --el-button-border-color: var(--primary-color) !important;
+  --el-button-hover-bg-color: var(--primary-light) !important;
+  --el-button-hover-border-color: var(--primary-light) !important;
+  --el-button-active-bg-color: var(--primary-dark) !important;
+  --el-button-active-border-color: var(--primary-dark) !important;
+}
+
+.el-button--success {
+  --el-button-bg-color: var(--success-color) !important;
+  --el-button-border-color: var(--success-color) !important;
+}
+
+.el-button--danger {
+  --el-button-bg-color: var(--error-color) !important;
+  --el-button-border-color: var(--error-color) !important;
+}
+
+.el-button--warning {
+  --el-button-bg-color: var(--warning-color) !important;
+  --el-button-border-color: var(--warning-color) !important;
+}
+
+.el-button--info {
+  --el-button-bg-color: var(--info-color) !important;
+  --el-button-border-color: var(--info-color) !important;
+}
+
+/* 标签样式覆盖 */
+.el-tag--success {
+  --el-tag-bg-color: rgba(var(--success-color-rgb), 0.1) !important;
+  --el-tag-border-color: var(--success-color) !important;
+  --el-tag-text-color: var(--success-color) !important;
+}
+
+.el-tag--danger {
+  --el-tag-bg-color: rgba(var(--error-color-rgb), 0.1) !important;
+  --el-tag-border-color: var(--error-color) !important;
+  --el-tag-text-color: var(--error-color) !important;
+}
+
+.el-tag--warning {
+  --el-tag-bg-color: rgba(var(--warning-color-rgb), 0.1) !important;
+  --el-tag-border-color: var(--warning-color) !important;
+  --el-tag-text-color: var(--warning-color) !important;
+}
+
+.el-tag--info {
+  --el-tag-bg-color: rgba(var(--gray-500), 0.1) !important;
+  --el-tag-border-color: var(--gray-500) !important;
+  --el-tag-text-color: var(--text-secondary) !important;
+}
+
+/* Tab样式覆盖 */
+.el-tabs__active-bar {
+  background-color: var(--primary-color) !important;
+}
+
+.el-tabs__item.is-active {
+  color: var(--primary-color) !important;
+}
+
+.el-tabs__item:hover {
+  color: var(--primary-light) !important;
+}
+
+/* 分页器样式覆盖 */
+.el-pagination.is-background .el-pager li:not(.is-disabled).is-active {
+  background-color: var(--primary-color) !important;
+}
+
+.el-pagination.is-background .el-pager li:not(.is-disabled):hover {
+  color: var(--primary-color) !important;
+}
+
+/* 评分组件样式覆盖 */
+.el-rate__icon.el-rate__icon--full {
+  color: var(--warning-color) !important;
+}
+
+/* 输入框样式覆盖 */
+.el-input__inner:focus,
+.el-textarea__inner:focus {
+  border-color: var(--primary-color) !important;
+}
+
+/* Select样式覆盖 */
+.el-select-dropdown__item.selected {
+  color: var(--primary-color) !important;
+}
+
+/* Switch组件样式覆盖 */
+.el-switch.is-checked .el-switch__core {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+/* 对话框样式覆盖 */
+.el-dialog__headerbtn:hover .el-dialog__close {
+  color: var(--primary-color) !important;
+}
+
+/* 上传组件样式覆盖 */
+.el-upload:hover {
+  color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.el-upload-dragger:hover {
+  border-color: var(--primary-color) !important;
+}
+
+/* 消息提示样式覆盖 */
+.el-message--success {
+  --el-message-bg-color: rgba(var(--success-color-rgb), 0.1) !important;
+  --el-message-text-color: var(--success-color) !important;
+  --el-message-border-color: var(--success-color) !important;
+}
+
+.el-message--error {
+  --el-message-bg-color: rgba(var(--error-color-rgb), 0.1) !important;
+  --el-message-text-color: var(--error-color) !important;
+  --el-message-border-color: var(--error-color) !important;
+}
+
+.el-message--warning {
+  --el-message-bg-color: rgba(var(--warning-color-rgb), 0.1) !important;
+  --el-message-text-color: var(--warning-color) !important;
+  --el-message-border-color: var(--warning-color) !important;
+}
+
+.el-message--info {
+  --el-message-bg-color: rgba(var(--info-color-rgb), 0.1) !important;
+  --el-message-text-color: var(--info-color) !important;
+  --el-message-border-color: var(--info-color) !important;
 }

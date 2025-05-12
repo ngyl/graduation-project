@@ -68,7 +68,6 @@
               <el-button 
                 size="small" 
                 type="danger"
-                :disabled="scope.row.usage && scope.row.usage > 0"
                 @click="handleDelete(scope.row)"
               >
                 删除
@@ -336,11 +335,6 @@ const submitTag = async () => {
 
 // 处理删除
 const handleDelete = (tag: TagDTO) => {
-  if (tag.usage && tag.usage > 0) {
-    ElMessage.warning(`标签"${tag.name}"正在使用中，无法删除`);
-    return;
-  }
-  
   currentTag.value = tag;
   deleteDialogVisible.value = true;
 };

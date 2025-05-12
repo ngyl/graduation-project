@@ -151,7 +151,7 @@ public class ElasticsearchServiceImpl implements ElasticsearchService {
         }
         
         // 同步用户数据
-        List<UserDTO> allUsers = userService.getAllUsers(0, Integer.MAX_VALUE);
+        List<UserDTO> allUsers = userService.getAllUsers(1, Integer.MAX_VALUE);
         log.info("开始同步{}条用户数据", allUsers.size());
         for (UserDTO user : allUsers) {
             syncUserToEs(user.getId());

@@ -111,4 +111,12 @@ export const followUser = (userId: number) => {
  */
 export const unfollowUser = (userId: number) => {
     return toggleFollow(userId);
+};
+
+/**
+ * 获取推荐用户列表
+ * @param limit 限制数量
+ */
+export const getRecommendedUsers = (limit: number = 10) => {
+    return service.get<ApiResponse<UserDTO[]>>(`/recommend/users?limit=${limit}`);
 }; 

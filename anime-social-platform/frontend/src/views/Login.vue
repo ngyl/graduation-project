@@ -127,16 +127,17 @@ const handleLogin = async () => {
 .login-box {
   width: 100%;
   max-width: 450px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-primary);
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--shadow-md);
   padding: 40px;
   text-align: center;
-  transition: transform 0.3s ease;
+  transition: var(--transition-base);
 }
 
 .login-box:hover {
   transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
 }
 
 .login-header {
@@ -144,13 +145,13 @@ const handleLogin = async () => {
 }
 
 .login-header h2 {
-  color: #409eff;
+  color: var(--primary-color);
   font-size: 28px;
   margin-bottom: 10px;
 }
 
 .login-header p {
-  color: #666;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 
@@ -167,6 +168,17 @@ const handleLogin = async () => {
   height: 50px;
   font-size: 16px;
   margin-top: 10px;
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  transition: var(--transition-base);
+}
+
+.login-button:hover, 
+.login-button:focus {
+  background-color: var(--primary-light);
+  border-color: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .form-footer {
@@ -175,13 +187,13 @@ const handleLogin = async () => {
 }
 
 .register-link {
-  color: #409eff;
+  color: var(--primary-color);
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: var(--transition-base);
 }
 
 .register-link:hover {
-  color: #66b1ff;
+  color: var(--primary-light);
   text-decoration: underline;
 }
 

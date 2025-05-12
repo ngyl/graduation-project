@@ -138,13 +138,13 @@ const toggleFavorite = async () => {
 
 /* 已收藏状态的样式 */
 .el-button--danger.favorite-button {
-  background-color: rgba(var(--error-color-rgb, 231, 76, 60), 0.1);
+  background-color: rgba(var(--error-color-rgb), 0.1);
   color: var(--error-color);
   border-color: var(--error-color);
 }
 
 .el-button--danger.favorite-button:hover {
-  background-color: rgba(var(--error-color-rgb, 231, 76, 60), 0.2);
+  background-color: rgba(var(--error-color-rgb), 0.2);
 }
 
 .el-icon {

@@ -149,6 +149,23 @@
                 />
               </el-select>
             </div>
+            
+            <!-- 推荐标签 -->
+            <div class="edit-section" v-if="recommendedTags.length > 0">
+              <h3>推荐标签</h3>
+              <p class="recommended-hint">根据您的兴趣推荐以下标签:</p>
+              <div class="recommended-tags">
+                <el-tag 
+                  v-for="tag in recommendedTags" 
+                  :key="tag.id"
+                  class="recommended-tag"
+                  :type="isTagRecommended(tag) ? 'success' : 'info'"
+                  @click="addRecommendedTag(tag)"
+                >
+                  {{ tag.name }}
+                </el-tag>
+              </div>
+            </div>
           </el-tab-pane>
         </el-tabs>
         
@@ -297,7 +314,7 @@ import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 import { getUserDetail, getUserPosts, getUserFavorites, getUserFollowing, updateUserInfo, uploadAvatar, toggleFollow, getUserResources } from '@/api/user';
-import { getTagsByType, updateUserTags } from '@/api/tag';
+import { getTagsByType, updateUserTags, getRecommendedTags } from '@/api/tag';
 import type { UserDetail, Post, FavoriteResource, UserDTO, Resource } from '@/types/user';
 import type { TagDTO } from '@/types/tag';
 import { ElMessage } from 'element-plus';
@@ -374,6 +391,8 @@ const allTags = ref<{
   postTags: [],
   resourceTags: []
 });
+
+const recommendedTags = ref<TagDTO[]>([]);
 
 const editForm = ref<{
   avatar?: string;
@@ -555,8 +574,25 @@ const loadTags = async () => {
     if (resourceTagsResponse.data.code === 200) {
       allTags.value.resourceTags = resourceTagsResponse.data.data;
     }
+
+    // 加载推荐标签
+    await loadRecommendedTags();
   } catch (error: any) {
     ElMessage.error(error.response?.data?.message || '获取标签失败');
+  }
+};
+
+// 加载推荐标签
+const loadRecommendedTags = async () => {
+  try {
+    const userId = Number(route.params.id);
+    const response = await getRecommendedTags(userId);
+    
+    if (response.data.code === 200) {
+      recommendedTags.value = response.data.data;
+    }
+  } catch (error: any) {
+    console.error('加载推荐标签失败', error);
   }
 };
 
@@ -731,6 +767,45 @@ const handleFavoritesPageChange = (page: number) => {
   loadUserFavorites();
 };
 
+// 判断标签是否已被推荐（已添加到用户标签中）
+const isTagRecommended = (tag: TagDTO) => {
+  if (tag.type === 'post') {
+    return editForm.value.postTagIds?.includes(tag.id);
+  } else if (tag.type === 'resource') {
+    return editForm.value.resourceTagIds?.includes(tag.id);
+  }
+  return false;
+};
+
+// 添加推荐标签
+const addRecommendedTag = (tag: TagDTO) => {
+  if (tag.type === 'post') {
+    if (!editForm.value.postTagIds) {
+      editForm.value.postTagIds = [];
+    }
+    if (!editForm.value.postTagIds.includes(tag.id)) {
+      editForm.value.postTagIds.push(tag.id);
+      ElMessage.success(`已添加"${tag.name}"标签`);
+    } else {
+      // 如果已经添加过，则移除
+      editForm.value.postTagIds = editForm.value.postTagIds.filter(id => id !== tag.id);
+      ElMessage.info(`已移除"${tag.name}"标签`);
+    }
+  } else if (tag.type === 'resource') {
+    if (!editForm.value.resourceTagIds) {
+      editForm.value.resourceTagIds = [];
+    }
+    if (!editForm.value.resourceTagIds.includes(tag.id)) {
+      editForm.value.resourceTagIds.push(tag.id);
+      ElMessage.success(`已添加"${tag.name}"标签`);
+    } else {
+      // 如果已经添加过，则移除
+      editForm.value.resourceTagIds = editForm.value.resourceTagIds.filter(id => id !== tag.id);
+      ElMessage.info(`已移除"${tag.name}"标签`);
+    }
+  }
+};
+
 // 组件挂载时加载数据
 onMounted(async () => {
   try {
@@ -831,6 +906,9 @@ watch(showEditDialog, (newVal) => {
       postTagIds: [...postTagIds],
       resourceTagIds: [...resourceTagIds]
     };
+
+    // 打开对话框时重新加载推荐标签
+    loadRecommendedTags();
   }
 });
 </script>
@@ -859,12 +937,12 @@ watch(showEditDialog, (newVal) => {
 .user-details h2 {
   margin: 0;
   font-size: 24px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .bio {
   margin: 10px 0;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .user-stats {
@@ -881,19 +959,19 @@ watch(showEditDialog, (newVal) => {
   display: block;
   font-size: 20px;
   font-weight: bold;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .stat-label {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .content-tabs {
-  background: #fff;
+  background: var(--bg-primary);
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-md);
 }
 
 .empty-state {
@@ -905,19 +983,20 @@ watch(showEditDialog, (newVal) => {
 .resource-card,
 .user-card {
   margin-bottom: 15px;
+  transition: var(--transition-base);
 }
 
 .post-content,
 .resource-description {
   margin: 10px 0;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .post-meta,
 .resource-meta {
   display: flex;
   gap: 15px;
-  color: #999;
+  color: var(--gray-500);
   font-size: 14px;
 }
 
@@ -950,17 +1029,17 @@ watch(showEditDialog, (newVal) => {
 
 .avatar-uploader .avatar-uploader-icon {
   font-size: 28px;
-  color: #8c939d;
+  color: var(--gray-500);
   width: 100px;
   height: 100px;
   line-height: 100px;
   text-align: center;
-  border: 1px dashed #d9d9d9;
+  border: 1px dashed var(--gray-300);
   border-radius: 50%;
 }
 
 .avatar-uploader .avatar-uploader-icon:hover {
-  border-color: #409EFF;
+  border-color: var(--primary-color);
 }
 
 .tags-section {
@@ -970,7 +1049,7 @@ watch(showEditDialog, (newVal) => {
 .tags-section h3 {
   margin-bottom: 10px;
   font-size: 16px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .tags-container {
@@ -982,7 +1061,7 @@ watch(showEditDialog, (newVal) => {
 .tag-group h4 {
   margin-bottom: 8px;
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .tag-item {
@@ -991,7 +1070,7 @@ watch(showEditDialog, (newVal) => {
 }
 
 .no-tags {
-  color: #999;
+  color: var(--gray-500);
   font-size: 14px;
 }
 
@@ -1028,7 +1107,7 @@ watch(showEditDialog, (newVal) => {
 .edit-section {
   margin-bottom: 30px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #ebeef5;
+  border-bottom: 1px solid var(--gray-200);
 }
 
 .edit-section:last-child {
@@ -1041,23 +1120,23 @@ watch(showEditDialog, (newVal) => {
   margin-top: 0;
   margin-bottom: 15px;
   font-size: 16px;
-  color: #333;
+  color: var(--text-primary);
 }
 
 .upload-tip {
   margin-top: 10px;
   font-size: 12px;
-  color: #909399;
+  color: var(--text-hint);
 }
 
 .clickable {
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: var(--transition-base);
 }
 
 .clickable:hover {
   transform: translateY(-3px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .loading-container {
@@ -1068,5 +1147,62 @@ watch(showEditDialog, (newVal) => {
   margin-top: 20px;
   display: flex;
   justify-content: center;
+}
+
+.recommended-hint {
+  font-size: 14px;
+  color: var(--text-hint);
+  margin-bottom: 10px;
+}
+
+.recommended-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.recommended-tag {
+  cursor: pointer;
+  margin: 0 5px 5px 0;
+  transition: var(--transition-base);
+}
+
+.recommended-tag:hover {
+  transform: scale(1.05);
+}
+
+/* 自定义Element Plus组件样式 */
+:deep(.el-button--primary) {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  transition: var(--transition-base);
+}
+
+:deep(.el-button--primary:hover),
+:deep(.el-button--primary:focus) {
+  background-color: var(--primary-light);
+  border-color: var(--primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+:deep(.el-button--default:hover),
+:deep(.el-button--default:focus) {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+:deep(.el-tag--success) {
+  background-color: rgba(var(--success-color-rgb), 0.1);
+  border-color: var(--success-color);
+  color: var(--success-color);
+}
+
+:deep(.el-tag--info) {
+  background-color: rgba(var(--gray-500), 0.1);
+  border-color: var(--gray-500);
+  color: var(--text-secondary);
 }
 </style> 

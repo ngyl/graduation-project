@@ -46,7 +46,6 @@ E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocia
 E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\repository\ResourceRepository.java
 E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\listener\UserEntityListener.java
 E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\exception\GlobalExceptionHandler.java
-E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\controller\FriendshipController.java
 E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\model\dto\EventParticipationDTO.java
 E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\model\dto\UserDetailResponse.java
 E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\config\WebSocketConfig.java
@@ -54,6 +53,7 @@ E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocia
 E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\model\Message.java
 E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\repository\UserRepository.java
 E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\model\User.java
+E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\controller\RecommendController.java
 E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\config\WebMvcConfig.java
 E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\model\dto\ApiResponse.java
 E:\graduation-project\anime-social-platform\backend\src\main\java\com\animesocial\platform\service\CommentService.java

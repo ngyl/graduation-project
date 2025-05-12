@@ -34,8 +34,6 @@ import java.util.List;
 @EnableElasticsearchRepositories(basePackages = "com.animesocial.platform.repository.es")
 public class ElasticsearchConfig extends ElasticsearchConfigurationSupport {
 
-    private static final Logger logger = LoggerFactory.getLogger(ElasticsearchConfig.class);
-
     @Value("${elasticsearch.host:localhost}")
     private String host;
 

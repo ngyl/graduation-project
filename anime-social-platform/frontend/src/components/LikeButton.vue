@@ -130,13 +130,13 @@ const toggleLike = async () => {
 
 /* 已点赞状态的样式 */
 .el-button--danger.like-button {
-  background-color: rgba(var(--error-color-rgb, 231, 76, 60), 0.1);
+  background-color: rgba(var(--error-color-rgb), 0.1);
   color: var(--error-color);
   border-color: var(--error-color);
 }
 
 .el-button--danger.like-button:hover {
-  background-color: rgba(var(--error-color-rgb, 231, 76, 60), 0.2);
+  background-color: rgba(var(--error-color-rgb), 0.2);
 }
 
 .el-icon {

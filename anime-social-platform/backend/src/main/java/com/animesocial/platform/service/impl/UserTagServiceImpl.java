@@ -234,8 +234,15 @@ public class UserTagServiceImpl implements UserTagService {
         return result;
     }
 
-    @Override
-    public List<Integer> getSimilarUsers(Integer userId, Integer limit) {
+    /**
+     * 获取与指定用户标签相似的用户
+     * 注意：这是一个内部辅助方法，仅供包内其他服务调用
+     * 
+     * @param userId 用户ID
+     * @param limit 限制数量
+     * @return 相似用户ID列表，按相似度排序
+     */
+    List<Integer> getSimilarUsers(Integer userId, Integer limit) {
         // 检查用户是否存在
         if (!userRepository.existsByIdOrUsername(userId, null)) {
             throw new BusinessException("用户不存在");
@@ -273,61 +280,6 @@ public class UserTagServiceImpl implements UserTagService {
         
         // 提取用户ID并限制结果数量
         return sortedUsers.stream()
-                .map(Map.Entry::getKey)
-                .limit(limit != null && limit > 0 ? limit : 10)
-                .toList();
-    }
-
-    @Override
-    public List<Integer> getRecommendedContent(Integer userId, String contentType, Integer limit) {
-        // 检查用户是否存在
-        if (!userRepository.existsByIdOrUsername(userId, null)) {
-            throw new BusinessException("用户不存在");
-        }
-        
-        // 验证内容类型
-        if (!"post".equals(contentType) && !"resource".equals(contentType)) {
-            throw new BusinessException("无效的内容类型");
-        }
-        
-        // 获取用户的标签
-        List<Tag> userTags = getUserTags(userId);
-        if (userTags.isEmpty()) {
-            return new ArrayList<>();
-        }
-        
-        // 提取标签ID
-        List<Integer> userTagIds = userTags.stream()
-                .map(Tag::getId)
-                .toList();
-        
-        // 根据内容类型和用户标签查找推荐内容
-        // 这里简单实现，实际可能需要更复杂的推荐算法
-        Map<Integer, Integer> contentScores = new HashMap<>();
-        
-        // 为每个标签查找关联的内容
-        for (Integer tagId : userTagIds) {
-            List<Integer> contentIds;
-            if ("post".equals(contentType)) {
-                // 查找与标签关联的帖子
-                contentIds = tagRepository.findPostIdsByTagId(tagId);
-            } else {
-                // 查找与标签关联的资源
-                contentIds = tagRepository.findResourceIdsByTagId(tagId);
-            }
-            
-            for (Integer contentId : contentIds) {
-                // 增加内容的推荐分数
-                contentScores.put(contentId, contentScores.getOrDefault(contentId, 0) + 1);
-            }
-        }
-        
-        // 按推荐分数排序
-        List<Map.Entry<Integer, Integer>> sortedContent = new ArrayList<>(contentScores.entrySet());
-        sortedContent.sort((a, b) -> b.getValue().compareTo(a.getValue()));
-        
-        // 提取内容ID并限制结果数量
-        return sortedContent.stream()
                 .map(Map.Entry::getKey)
                 .limit(limit != null && limit > 0 ? limit : 10)
                 .toList();
